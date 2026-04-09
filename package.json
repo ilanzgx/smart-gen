@@ -1,0 +1,7 @@
+{
+  "name": "@smart-gen/root",
+  "private": true,
+  "engines": {
+    "node": ">=20.0"
+  }
+}
