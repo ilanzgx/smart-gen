@@ -48,7 +48,12 @@ Local exclusivo para funções utilitárias genéricas, tipagens (types/interfac
 
 ### 🗄️ Supabase (`@smart-gen/supabase`)
 
-Camada isolada de backend. Toda e qualquer interação com o banco de dados via Supabase (autenticação, acesso a tabelas, policies) deve ocorrer **dentro deste pacote** e ser exportada para a aplicação principal.
+Camada isolada de backend. Toda e qualquer interação com o banco de dados via Supabase (autenticação, acesso a tabelas, policies) deve ocorrer **dentro deste pacote**.
+
+A lógica interna é organizada por **Resources** (ex: `generators`, `users`), onde cada recurso possui:
+- **Queries:** Funções exclusivas para leitura de dados (select).
+- **Mutations:** Funções para escrita (insert, update, delete).
+- **Services:** Local para regras de negócio complexas que orquestram múltiplas operações.
 
 ---
 
