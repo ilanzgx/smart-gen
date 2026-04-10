@@ -1,6 +1,12 @@
 {
   "name": "@smart-gen/root",
   "private": true,
+  "scripts": {
+    "dev": "pnpm -r --filter \"@smart-gen/*\" --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test:unit",
+    "check-all": "pnpm -r lint && pnpm -r type-check"
+  },
   "engines": {
     "node": ">=20.0"
   }
