@@ -1,0 +1,7 @@
+{
+  "extends": "@smart-gen/tsconfig/node.json",
+  "include": ["src/**/*"],
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo"
+  }
+}

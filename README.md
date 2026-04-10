@@ -33,6 +33,15 @@ A aplicação front-end principal.
 
 Pacotes desenvolvidos pela equipe que podem ser importados por qualquer aplicação (`apps/`).
 
+### ⚙️ TSConfig (`@smart-gen/tsconfig`)
+
+Presets TypeScript centralizados para todo o monorepo. Disponibiliza quatro configurações base:
+
+- `base.json` — Configurações compartilhadas (strict, bundler, ESNext).
+- `vue.json` — Extends `base` + DOM libs + suporte a Vue SFC (`.vue`).
+- `node.json` — Extends `base` + Node.js types.
+- `vitest.json` — Extends `vue` + jsdom para ambiente de testes.
+
 ### 🧩 Shared (`@smart-gen/shared`)
 
 Local exclusivo para funções utilitárias genéricas, tipagens (types/interfaces) e constantes que não dependem de nada do front-end. O objetivo é evitar duplicação de lógicas.

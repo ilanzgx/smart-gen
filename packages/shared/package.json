@@ -6,5 +6,8 @@
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@smart-gen/tsconfig": "workspace:*"
   }
 }
