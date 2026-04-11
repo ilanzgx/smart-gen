@@ -4,8 +4,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Database } from "../../../database.types";
 
 describe("generators.queries testes unitários", () => {
+  const mockSingle = vi.fn();
   const mockOrder = vi.fn().mockReturnThis();
-  const mockEq = vi.fn().mockReturnThis();
+  const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
   const mockSelect = vi.fn().mockReturnValue({
     order: mockOrder,
     eq: mockEq,
@@ -55,11 +56,11 @@ describe("generators.queries testes unitários", () => {
     await expect(getGeneratorById(mockSupabase, "uuid")).rejects.toThrow(Error);
   });
 
-  it("deve buscar um gerador específico pelo id ordenados por data de criação", async () => {
+  it("deve buscar um gerador específico", async () => {
     // Arrange
-    const mockData = [{ id: "uuid", esp32_id: "esp32_uuid" }];
+    const mockData = { id: "uuid", esp32_id: "esp32_uuid" };
 
-    mockOrder.mockResolvedValue({
+    mockSingle.mockResolvedValue({
       data: mockData,
       error: null,
     });
@@ -70,7 +71,7 @@ describe("generators.queries testes unitários", () => {
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith("gerador");
     expect(mockEq).toHaveBeenCalledWith("id", "uuid");
-    expect(mockOrder).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(mockSingle).toHaveBeenCalled();
     expect(sut).toEqual(mockData);
   });
 });

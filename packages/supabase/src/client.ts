@@ -1,14 +1,11 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
-/*
+/**
  * Cria uma instância do Supabase com a URL e a chave fornecidas.
- *
- * @param url - A URL do Supabase.
- * @param key - A chave de acesso do Supabase, JAMAIS use o service key,
- * apenas a chave anonima com segurança RLS
- *
- * @returns Uma instância do Supabase .
+ * @param {string} url - A URL do Supabase.
+ * @param {string} key - A chave de acesso do Supabase, JAMAIS use o service key, apenas a chave anonima com segurança RLS
+ * @returns {SupabaseClient<Database>} Uma instância do Supabase.
  */
 export const createSupabaseInstance = (
   url: string,

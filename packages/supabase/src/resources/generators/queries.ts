@@ -1,14 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../database.types";
+import type { Generator } from "./types";
 
-/*
+/**
  * Retorna todos os geradores ordenados por data de criação, do mais recente para o mais antigo.
- *
- * @param supabase - Instância de SupabaseClient.
- *
- * @returns Lista de geradores.
+ * @param {SupabaseClient} supabase - Instância de SupabaseClient.
+ * @returns {Promise<Generator[]>} Lista de geradores.
  */
-export const getGenerators = async (supabase: SupabaseClient<Database>) => {
+export const getGenerators = async (
+  supabase: SupabaseClient<Database>,
+): Promise<Generator[]> => {
   const { data, error } = await supabase
     .from("gerador")
     .select("*")
@@ -19,23 +20,21 @@ export const getGenerators = async (supabase: SupabaseClient<Database>) => {
   return data;
 };
 
-/*
+/**
  * Retorna um gerador específico pelo id, ordenado por data de criação.
- *
- * @param supabase - Instância de SupabaseClient.
- * @param id - Id do gerador.
- *
- * @returns Dados do gerador.
+ * @param {SupabaseClient} supabase - Instância de SupabaseClient.
+ * @param {string} id - Id do gerador.
+ * @returns {Promise<Generator>}  Dados do gerador.
  */
 export const getGeneratorById = async (
   supabase: SupabaseClient<Database>,
   id: string,
-) => {
+): Promise<Generator> => {
   const { data, error } = await supabase
     .from("gerador")
     .select("*")
     .eq("id", id)
-    .order("created_at", { ascending: false });
+    .single();
 
   if (error) throw new Error(error.message);
 
