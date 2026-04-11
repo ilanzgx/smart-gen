@@ -16,8 +16,9 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.2.2",
     "@smart-gen/shared": "workspace:*",
+    "@smart-gen/supabase": "workspace:*",
+    "@tailwindcss/vite": "^4.2.2",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.2",
     "vue": "^3.5.31",
