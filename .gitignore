@@ -5,3 +5,9 @@ node_modules
 .env
 .env.*
 !.env.example
+
+# Ignore Vercel files
+.vercel
+
+# Ignore local environment variables files
+.env*.local
