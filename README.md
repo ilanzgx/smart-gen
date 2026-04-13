@@ -1,4 +1,5 @@
 <a id="topo"></a>
+
 # ⚡​ Smart Gen - Monitoramento de geradores de energia
 
 Aplicação responsável por monitorar geradores de energia através de microcontroladores ESP32 com dados adquiridos através de sensores. Monorepo construído com [PNPM Workspaces](https://pnpm.io/workspaces). Ele suporta múltiplas aplicações e concentra as lógicas reutilizáveis do projeto.
@@ -14,6 +15,7 @@ Aplicação responsável por monitorar geradores de energia através de microcon
 - [Aplicações](#aplicações)
 - [Pacotes Internos](#pacotes-internos)
 - [Scripts Disponíveis](#scripts-disponíveis)
+- [Workflow da Equipe](#workflow-da-equipe)
 - [Testes](#testes)
 - [Deploy / CI-CD](#deploy--ci-cd)
 - [Regras Rápidas da Equipe](#regras-rápidas-da-equipe)
@@ -87,7 +89,7 @@ cp .env.example .env
 # Edite .env e adicione suas credenciais do Supabase
 ```
 
-*Veja a tabela detalhada de credenciais na seção abaixo.*
+_Veja a tabela detalhada de credenciais na seção abaixo._
 
 ### 4. Inicie o Desenvolvimento
 
@@ -165,14 +167,25 @@ A lógica interna é organizada por **Resources** (ex: `generators`, `users`), o
 
 ### Na Raiz do Projeto
 
-| Comando          | Descrição                                          |
-| ---------------- | -------------------------------------------------- |
-| `pnpm dev`       | Inicia todas as aplicações em modo desenvolvimento |
-| `pnpm build`     | Constrói todas as aplicações para produção         |
-| `pnpm test`      | Roda todos os testes unitários                     |
-| `pnpm check-all` | Executa lint e type-check em todos os pacotes      |
+| Comando          | Descrição                                                              |
+| ---------------- | ---------------------------------------------------------------------- |
+| `pnpm dev`       | Inicia todas as aplicações em modo desenvolvimento                     |
+| `pnpm build`     | Constrói todas as aplicações para produção                             |
+| `pnpm test`      | Roda todos os testes unitários                                         |
+| `pnpm check-all` | Executa lint e type-check em todos os pacotes                          |
+| `pnpm run sync`  | **Início:** Puxa as novidades do Git (com autostash) e instala pacotes |
+| `pnpm run ready` | **Fim:** Sincroniza e verifica erros antes de enviar seu código        |
 
-### No Website (`apps/website`)
+## Workflow da Equipe
+
+Para manter o projeto organizado e evitar conflitos, siga estes dois momentos:
+
+1.  **Ao começar a trabalhar:** Rode `pnpm run sync`. Isso garante que você tem a versão mais recente do código dos seus colegas sem perder suas mudanças locais.
+2.  **Antes de abrir um Pull Request (PR):** Rode `pnpm run ready`. Ele vai garantir que o seu código "se dá bem" com o código novo que chegou e que não existem erros de estilo ou de tipagem.
+
+---
+
+## Testes
 
 | Comando                                       | Descrição                                  |
 | --------------------------------------------- | ------------------------------------------ |
@@ -219,13 +232,13 @@ Qualquer Push ou Pull Request mesclado (merge) na branch `main` irá automaticam
 3. Executar os **Testes Unitários** no projeto.
 4. Caso tudo passe sem falhas, realizar o build seguro e fazer **Deploy Automático para Produção no Vercel**.
 
-*Nota: Se os testes ou a formatação falharem, o deploy na Vercel é cancelado para preservar a estabilidade da aplicação em si.*
+_Nota: Se os testes ou a formatação falharem, o deploy na Vercel é cancelado para preservar a estabilidade da aplicação em si._
 
 ## Regras Rápidas da Equipe
 
 1. **Pense globalmente**: Se um código for útil em outros lugares, ponha em `packages/shared`.
 2. **Dados Isolados**: A aplicação Vue (`apps/website`) nunca deve chamar a API diretamente; use apenas o cliente exportado por `packages/supabase`.
-3. **Mantenha o código limpo**: Sempre execute o *Linter* (`lint`) e o *Prettier* (`format`) antes dos seus commits.
+3. **Mantenha o código limpo**: Sempre execute o _Linter_ (`lint`) e o _Prettier_ (`format`) antes dos seus commits.
 
 ---
 
