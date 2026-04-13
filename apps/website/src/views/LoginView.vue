@@ -29,9 +29,7 @@ async function handleLogin() {
     <div class="w-full max-w-sm space-y-6">
       <div class="space-y-2 text-center">
         <h1 class="text-2xl font-bold tracking-tight">Entrar</h1>
-        <p class="text-muted-foreground text-sm">
-          Insira suas credenciais para acessar sua conta
-        </p>
+        <p class="text-muted-foreground text-sm">Insira suas credenciais para acessar sua conta</p>
       </div>
 
       <form @submit.prevent="handleLogin" class="space-y-4">
