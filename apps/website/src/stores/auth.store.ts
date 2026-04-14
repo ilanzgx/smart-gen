@@ -4,7 +4,6 @@ import {
   signUp as signUpFn,
   signOut as signOutFn,
   getSession,
-  getUser,
   type User,
   type SignInCredentials,
   type SignUpCredentials,
@@ -102,14 +101,14 @@ export const useAuthStore = defineStore('auth', () => {
       })
       unsubscribe = data.subscription.unsubscribe
 
-      const sessionResponse = await getSession(supabase)
-      session.value = sessionResponse
-      if (sessionResponse) {
-        user.value = await getUser(supabase)
+      const sessionData = await getSession(supabase)
+
+      if (sessionData) {
+        session.value = sessionData
+        user.value = sessionData.user
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Erro ao inicializar autenticação'
-      return unsubscribe ?? (() => {})
     }
 
     return unsubscribe ?? (() => {})

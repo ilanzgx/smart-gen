@@ -160,7 +160,6 @@ describe('Auth Store - Testes Unitários', () => {
       const mockSession = { user: { id: '123' } } as any
 
       vi.mocked(supabasePkg.getSession).mockResolvedValue(mockSession)
-      vi.mocked(supabasePkg.getUser).mockResolvedValue(mockSession.user)
 
       // Act
       const unsubscribe = await store.initializeAuth()
@@ -168,7 +167,7 @@ describe('Auth Store - Testes Unitários', () => {
       // Assert
       expect(typeof unsubscribe).toBe('function')
       expect(supabasePkg.getSession).toHaveBeenCalled()
-      expect(supabasePkg.getUser).toHaveBeenCalled()
+      expect(supabasePkg.getUser).not.toHaveBeenCalled()
 
       expect(store.session).toEqual(mockSession)
       expect(store.user).toEqual(mockSession.user)
