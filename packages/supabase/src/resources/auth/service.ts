@@ -2,6 +2,7 @@ import type {
   SignInCredentials,
   SignUpCredentials,
   AuthSession,
+  AuthUser,
 } from "./types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../database.types";
@@ -82,9 +83,11 @@ export const getSession = async (
  * Retorna o usuário autenticado verificado pelo servidor Supabase.
  * Use esta função em vez de getSession quando precisar de dados confiáveis.
  * @param {SupabaseClient} supabase - Instância de SupabaseClient.
- * @returns {Promise<User | null>} Dados do usuário autenticado.
+ * @returns {Promise<AuthUser>} Dados do usuário autenticado.
  */
-export const getUser = async (supabase: SupabaseClient<Database>) => {
+export const getUser = async (
+  supabase: SupabaseClient<Database>,
+): Promise<AuthUser> => {
   const { data, error } = await supabase.auth.getUser();
   if (error) {
     throw error;
