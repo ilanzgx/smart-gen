@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/stores/auth.store';
-import { getUser, type User } from '@smart-gen/supabase';
-import { onMounted, ref } from 'vue';
-import { RouterLink } from 'vue-router';
+import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/auth.store'
+import { getUser } from '@smart-gen/supabase'
+import { onMounted, ref } from 'vue'
+import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 
-const name = ref<User | null>(null);
+const name = ref<string | null>(null)
+
+const defaultGeneratorId = ref('11111111-1111-1111-1111-111111111111')
 
 function logout() {
-  useAuthStore().signOut();
+  useAuthStore().signOut()
 }
 
 onMounted(async () => {
-  name.value = (await getUser(supabase)).user_metadata?.name;
-});
+  const userResponse = await getUser(supabase)
+  name.value = userResponse.user_metadata?.name || userResponse.email
+})
 </script>
 
 <template>
@@ -28,8 +31,13 @@ onMounted(async () => {
           <button @click="logout" class="text-blue-600 hover:underline">Logout</button>
         </RouterLink>
       </div>
+
+      <div class="mt-8">
+        <p class="text-muted-foreground text-xs">Dados do Gerador: {{ defaultGeneratorId }}</p>
+        <div class="border-t pt-6">
+          <TemperatureChart :generator-id="defaultGeneratorId" />
+        </div>
+      </div>
     </div>
   </main>
-
 </template>
-
