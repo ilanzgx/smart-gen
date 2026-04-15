@@ -76,24 +76,21 @@ const router = createRouter({
  * - Redireciona para o login se a rota não for pública e o usuário não estiver autenticado
  * - Redireciona para o dashboard se o usuário estiver autenticado e tentar acessar a página de login ou registro
  */
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore()
   const isPublic = to.meta.public === true
 
   // Se a rota não for pública e o usuário não estiver autenticado,
   // redireciona para o login
   if (!isPublic && !authStore.isAuthenticated) {
-    return next({ name: 'login' })
+    return { name: 'login' }
   }
 
   // Se o usuário estiver autenticado e tentar acessar a página de login ou registro,
   // redireciona para o dashboard
   if (authStore.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
-    return next({ name: 'dashboard' })
+    return { name: 'dashboard' }
   }
-
-  // Segue o fluxo normal
-  next()
 })
 
 export default router

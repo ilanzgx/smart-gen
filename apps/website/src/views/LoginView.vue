@@ -12,7 +12,7 @@ const authStore = useAuthStore()
 const email = ref('')
 const password = ref('')
 
-async function handleLogin() {
+async function handleLogin(): Promise<void> {
   if (!email.value || !password.value) return
 
   try {
