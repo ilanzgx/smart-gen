@@ -1,6 +1,6 @@
 # 🌐 Smart Gen — Website
 
-Aplicação front-end do Smart Gen, construída com **Vue 3** + **Vite** + **Tailwind CSS v4**.
+Aplicação front-end do Smart Gen, construída com **Vue 3.5**, **Vite 8**, **Tailwind CSS v4** e **ApexCharts**.
 
 ---
 
@@ -60,26 +60,29 @@ button { padding: 8px 16px; }
 ```text
 src/
 ├── assets/          # CSS global e arquivos estáticos
-│   └── main.css     # Entry point do CSS (importa Tailwind)
+│   └── main.css     # Entry point do CSS (Tailwind v4 + Fontes)
 │
-├── components/      # Componentes reutilizáveis (botões, cards, inputs...)
-│   └── MeuBotao.vue
+├── components/      # Componentes reutilizáveis
+│   ├── ui/          # Componentes de interface (Shadcn/UI)
+│   └── generators/  # Componentes de monitoramento (Gráficos, Cards)
 │
 ├── views/           # Páginas da aplicação (uma por rota)
 │   ├── HomeView.vue
-│   └── NotFoundView.vue
+│   ├── LoginView.vue
+│   └── DashboardView.vue
 │
-├── router/          # Configuração de rotas (Vue Router)
-│   └── index.ts     # Define quais URLs carregam quais views
+├── router/          # Configuração de rotas (Vue Router 5)
+│   └── index.ts     # Guardas de rota e mapeamento de URLs
 │
-├── stores/          # Estado global da aplicação (Pinia)
-│   └── useAuthStore.ts  (exemplo futuro)
+├── stores/          # Estado global da aplicação (Pinia 3)
+│   └── auth.store.ts # Controle de autenticação e sessão
 │
 ├── lib/             # Configurações de bibliotecas externas
-│   └── supabase.ts  # Instância do Supabase (usa @smart-gen/supabase)
+│   ├── supabase.ts  # Instância do Supabase (usa @smart-gen/supabase)
+│   └── utils.ts     # Utilitários de estilo (cn helper)
 │
 ├── App.vue          # Componente raiz — shell da aplicação
-└── main.ts          # Ponto de entrada — monta o app no DOM
+└── main.ts          # Ponto de entrada — inicializa o app
 ```
 
 ### Quando usar o quê?
@@ -87,10 +90,9 @@ src/
 | Eu preciso... | Coloco em... |
 | --- | --- |
 | Criar uma nova página | `views/` + adicionar rota no `router/index.ts` |
-| Criar um botão/card/input reutilizável | `components/` |
-| Guardar estado compartilhado (auth, dados) | `stores/` |
-| Adicionar CSS global | `assets/main.css` |
-| Configurar lib externa | `lib/` |
+| Criar um componente de monitoramento | `components/generators/` |
+| Criar um componente de UI básico | `components/ui/` |
+| Guardar estado compartilhado | `stores/` |
 
 ---
 
@@ -110,58 +112,58 @@ src/views/DashboardView.vue
 }
 ```
 
-### 2. Criar um componente reutilizável
+### 2. Monitoramento e Gráficos
 
-```vue
-<!-- src/components/GeneratorCard.vue -->
-<script setup lang="ts">
-defineProps<{
-  nome: string
-  status: 'online' | 'offline'
-}>()
-</script>
-
-<template>
-  <div class="rounded-lg border p-4">
-    <h3>{{ nome }}</h3>
-    <span>{{ status }}</span>
-  </div>
-</template>
-```
-
-Depois, use em qualquer view:
+Para exibir dados de sensores, utilize o componente de gráfico dedicado:
 
 ```vue
 <script setup lang="ts">
-import GeneratorCard from '@/components/GeneratorCard.vue'
+import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 </script>
 
 <template>
-  <GeneratorCard nome="Gerador #1" status="online" />
+  <TemperatureChart generator-id="uuid-do-gerador" />
 </template>
 ```
 
-### 3. Criar uma store (Pinia)
+### 3. Usar a Store de Autenticação
 
 ```ts
-// src/stores/useGeneratorStore.ts
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-import { supabase } from '@/lib/supabase'
-import { getGenerators } from '@smart-gen/supabase'
+import { useAuthStore } from '@/stores/auth.store'
 
-export const useGeneratorStore = defineStore('generators', () => {
-  const generators = ref([])
-  const loading = ref(false)
+const authStore = useAuthStore()
+console.log(authStore.userEmail)
+```
 
-  async function fetchAll() {
-    loading.value = true
-    generators.value = await getGenerators(supabase)
-    loading.value = false
-  }
+---
 
-  return { generators, loading, fetchAll }
-})
+## 🎨 Adicionando Componentes (Shadcn UI)
+
+Diferente de outras bibliotecas, o **Shadcn UI** não instala tudo de uma vez. Você "baixa" apenas o código do componente que precisa (ex: Botão, Card, Input) para dentro do seu projeto. Isso permite que você tenha controle total sobre o código visual.
+
+### Como baixar um novo componente:
+
+1. Acesse a [documentação oficial](https://www.shadcn-vue.com/docs/components/button.html) e escolha o que precisa.
+2. No terminal, na raiz do monorepo, execute o comando abaixo (substituindo `nome-do-componente` pelo que você deseja, ex: `card`):
+
+```bash
+pnpm --filter @smart-gen/website dlx shadcn-vue@latest add nome-do-componente
+```
+
+### Como usar o componente baixado:
+
+O comando criará os arquivos automaticamente na pasta `src/components/ui/`. Para usar em qualquer página:
+
+```vue
+<script setup lang="ts">
+// 1. Importe o componente (sempre use o @/ para facilitar)
+import { Button } from '@/components/ui/button'
+</script>
+
+<template>
+  <!-- 2. Use como uma tag HTML normal -->
+  <Button>Clique aqui</Button>
+</template>
 ```
 
 ---
@@ -182,14 +184,14 @@ export const useGeneratorStore = defineStore('generators', () => {
 ## 🛠️ Setup do Editor
 
 - **Editor:** [VS Code](https://code.visualstudio.com/)
-- **Extensão obrigatória:** [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) — habilita IntelliSense para `.vue`
-- **DevTools no browser:** Instale o [Vue DevTools](https://devtools.vuejs.org/) para inspecionar componentes e stores
+- **Extensão obrigatória:** [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+- **DevTools:** Instale o [Vue DevTools](https://devtools.vuejs.org/) no browser.
 
 ---
 
 ## 🤝 Regras do Projeto
 
-1. **Nunca importe o Supabase SDK direto** — use sempre a instância de `src/lib/supabase.ts` e as funções de `@smart-gen/supabase`.
-2. **Use Tailwind CSS para estilização** — Evite escrever blocos `<style scoped>` de CSS puro a menos que seja estritamente necessário (ex: animações complexas não suportadas pelo Tailwind). Aproveite todas as classes utilitárias do Tailwind v4 para manter o padrão e a performance do projeto.
-3. **Rode `lint` e `format` antes de commitar.**
-4. **Componentes reutilizáveis vão em `components/`**, páginas vão em `views/`.
+1. **Isolamento de Dados**: Nunca importe o Supabase SDK direto no componente — use a instância de `src/lib/supabase.ts` e as funções de `@smart-gen/supabase`.
+2. **Estilização**: Use Tailwind CSS v4 para tudo. Evite `<style scoped>` a menos que seja estritamente necessário para animações complexas.
+3. **Mobile First**: Desenvolva sempre pensando em telas menores primeiro.
+4. **Gráficos**: Utilize o **ApexCharts** para visualizações de dados, preferencialmente criando wrappers para cada tipo de sensor.

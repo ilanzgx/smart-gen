@@ -7,6 +7,7 @@ Aplicação responsável por monitorar geradores de energia através de microcon
 ## Sumário
 
 - [Visão Geral](#visão-geral)
+- [Objetivos](#objetivos)
 - [Tech Stack](#tech-stack)
 - [Pré-requisitos](#pré-requisitos)
 - [Arquitetura](#arquitetura)
@@ -19,6 +20,19 @@ Aplicação responsável por monitorar geradores de energia através de microcon
 - [Testes](#testes)
 - [Deploy / CI-CD](#deploy--ci-cd)
 - [Regras Rápidas da Equipe](#regras-rápidas-da-equipe)
+
+## Visão Geral
+
+Smart Gen é um ecossistema completo para o monitoramento remoto de geradores de energia. Utilizando o poder do **ESP32** para coleta de dados e o **Supabase** como infraestrutura de backend, o projeto oferece uma visão clara e em tempo real da saúde operacional dos equipamentos.
+
+## Objetivos
+
+O projeto Smart Gen visa resolver o problema de monitoramento manual e reativo de geradores, focando em:
+
+- **Monitoramento Preventivo**: Coletar dados de temperatura e níveis críticos de fluidos para evitar falhas catastróficas.
+- **Visualização em Tempo Real**: Fornecer um dashboard intuitivo e mobile-first para que gestores acompanhem o status de qualquer lugar.
+- **Baixo Custo e Alta Escalabilidade**: Utilizar microcontroladores acessíveis (ESP32) e uma arquitetura de monorepo que permite a expansão para múltiplos geradores e novas interfaces (Mobile/Desktop) sem duplicação de lógica.
+- **Decisões Baseadas em Dados**: Criar um histórico confiável de leituras para análises futuras de manutenção e eficiência energética.
 
 ## Tech Stack
 
