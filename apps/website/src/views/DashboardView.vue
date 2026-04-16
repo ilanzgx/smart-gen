@@ -21,7 +21,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="flex min-h-screen items-center justify-center p-4">
+  <main class="flex min-h-screen items-center justify-center p-4 mx-8">
     <div class="w-full space-y-6">
       <div class="space-y-2 text-center">
         <h1 class="text-2xl font-bold tracking-tight">👋 Olá, {{ name }}</h1>
