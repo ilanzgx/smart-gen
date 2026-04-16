@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { getUser } from '@smart-gen/supabase'
 import { onMounted, ref } from 'vue'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
+import WaterLevelChart from '@/components/generators/WaterLevelChart.vue'
 
 const name = ref<string | null>(null)
 
@@ -21,7 +22,7 @@ onMounted(async () => {
 
 <template>
   <main class="flex min-h-screen items-center justify-center p-4">
-    <div class="w-full max-w-sm space-y-6">
+    <div class="w-full space-y-6">
       <div class="space-y-2 text-center">
         <h1 class="text-2xl font-bold tracking-tight">👋 Olá, {{ name }}</h1>
       </div>
@@ -34,8 +35,13 @@ onMounted(async () => {
 
       <div class="mt-8">
         <p class="text-muted-foreground text-xs">Dados do Gerador: {{ defaultGeneratorId }}</p>
-        <div class="border-t pt-6">
-          <TemperatureChart :generator-id="defaultGeneratorId" />
+        <div class="flex justify-center items-center border-t pt-6">
+          <div class="w-1/2 pr-2">
+            <TemperatureChart :generator-id="defaultGeneratorId" />
+          </div>
+          <div class="w-1/2 pl-2">
+            <WaterLevelChart :generator-id="defaultGeneratorId" />
+          </div>
         </div>
       </div>
     </div>

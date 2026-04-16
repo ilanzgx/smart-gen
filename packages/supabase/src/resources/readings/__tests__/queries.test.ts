@@ -15,7 +15,7 @@ describe("readings.queries testes unitários", () => {
 
   const mockSupabase = {
     from: mockFrom,
-  } as unknown as SupabaseClient<Database>;
+  } as unknown as SupabaseClient;
 
   beforeEach(() => {
     vi.clearAllMocks();

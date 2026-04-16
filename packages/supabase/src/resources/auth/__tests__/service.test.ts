@@ -18,7 +18,7 @@ describe("auth.service testes unitários", () => {
       getSession: mockGetSession,
       getUser: mockGetUser,
     },
-  } as unknown as SupabaseClient<Database>;
+  } as unknown as SupabaseClient;
 
   beforeEach(() => {
     vi.clearAllMocks();

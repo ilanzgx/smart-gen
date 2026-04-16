@@ -8,7 +8,7 @@ import type { Generator } from "./types";
  * @returns {Promise<Generator[]>} Lista de geradores.
  */
 export const getGenerators = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
 ): Promise<Generator[]> => {
   const { data, error } = await supabase
     .from("gerador")
@@ -27,7 +27,7 @@ export const getGenerators = async (
  * @returns {Promise<Generator>}  Dados do gerador.
  */
 export const getGeneratorById = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   id: string,
 ): Promise<Generator> => {
   const { data, error } = await supabase

@@ -16,6 +16,9 @@ const props = defineProps({
 const chartOptions: ApexOptions = {
   chart: {
     type: 'line',
+    toolbar: {
+      show: false,
+    },
   },
   stroke: {
     curve: 'smooth',

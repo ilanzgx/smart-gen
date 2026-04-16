@@ -40,9 +40,9 @@ src/
 ## 🛠️ Regra de Ouro
 
 **Injeção de Dependências:** Nenhuma função aqui deve "criar" seu próprio client Supabase de forma invisível.
-Todas as funções que acessarem dados (`queries`, `mutations`, `services`) **devem receber** no seu primeiro parâmetro a instância cliente (tipada como `SupabaseClient<Database>`).
+Todas as funções que acessarem dados (`queries`, `mutations`, `services`) **devem receber** no seu primeiro parâmetro a instância cliente (tipada como `SupabaseClient`).
 
-- ✅ **Correto:** `export const getGenerators = async (supabase: SupabaseClient<Database>) => { ... }`
+- ✅ **Correto:** `export const getGenerators = async (supabase: SupabaseClient) => { ... }`
 - ❌ **Errado:** `export const getGenerators = async () => { const supabase = supabaseInit(); supabase.from(...) }`
 
 Isso nos permite interceptar requisições em testes escrevendo mocks perfeitos da instância supabase.

@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../database.types";
 import type { Leitura } from "./types";
 
 /**
@@ -8,7 +7,7 @@ import type { Leitura } from "./types";
  * @returns {Promise<Leitura[]>} - Dados de todas as leituras.
  */
 export const getReadings = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
 ): Promise<Leitura[]> => {
   const { data, error } = await supabase.from("registro").select("*");
 
@@ -24,7 +23,7 @@ export const getReadings = async (
  * @returns {Promise<Leitura>} - Dados da leitura.
  */
 export const getReadingById = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   id: string,
 ): Promise<Leitura> => {
   const { data, error } = await supabase
@@ -45,7 +44,7 @@ export const getReadingById = async (
  * @returns {Promise<Leitura[]>} - Dados de todas as leituras do gerador.
  */
 export const getReadingsByGeneratorId = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   generatorId: string,
 ): Promise<Leitura[]> => {
   const { data, error } = await supabase

@@ -14,7 +14,7 @@ import type { Database } from "../../database.types";
  * @returns Dados do login.
  */
 export const signIn = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   credentials: SignInCredentials,
 ) => {
   const { data, error } = await supabase.auth.signInWithPassword(credentials);
@@ -33,7 +33,7 @@ export const signIn = async (
  * @returns {Promise<{ user: User, session: AuthSession}>} Dados do cadastro.
  */
 export const signUp = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   credentials: SignUpCredentials,
 ) => {
   const { data, error } = await supabase.auth.signUp(credentials);
@@ -51,7 +51,7 @@ export const signUp = async (
  * @returns {Promise<void>}.
  */
 export const signOut = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
 ): Promise<void> => {
   const { error } = await supabase.auth.signOut();
 
@@ -68,7 +68,7 @@ export const signOut = async (
  * @returns {Promise<AuthSession | null>} Sessão atual do usuário.
  */
 export const getSession = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
 ): Promise<AuthSession | null> => {
   const { data, error } = await supabase.auth.getSession();
 
@@ -86,7 +86,7 @@ export const getSession = async (
  * @returns {Promise<AuthUser>} Dados do usuário autenticado.
  */
 export const getUser = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
 ): Promise<AuthUser> => {
   const { data, error } = await supabase.auth.getUser();
   if (error) {

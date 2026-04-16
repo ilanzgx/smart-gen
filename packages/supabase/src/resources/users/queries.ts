@@ -8,7 +8,7 @@ import type { UserProfile } from "./types";
  * @returns {Promise<UserProfile[]>} - Dados dos usuários.
  */
 export const getUsers = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
 ): Promise<UserProfile[]> => {
   const { data, error } = await supabase.from("usuario").select("*");
 
@@ -24,7 +24,7 @@ export const getUsers = async (
  * @returns {Promise<UserProfile>} - Dados do usuário.
  */
 export const getUserById = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   id: string,
 ): Promise<UserProfile> => {
   const { data, error } = await supabase
@@ -45,7 +45,7 @@ export const getUserById = async (
  * @returns {Promise<UserProfile>} - Dados do usuário.
  */
 export const getUserByEmail = async (
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   email: string,
 ): Promise<UserProfile> => {
   const { data, error } = await supabase
