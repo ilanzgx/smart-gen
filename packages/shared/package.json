@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "@smart-gen/tsconfig": "workspace:*"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
   }
 }
