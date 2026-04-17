@@ -1,28 +1,31 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useForm, useField } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
 import { useAuthStore } from '@/stores/auth.store'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button, Input, Label } from '@/components/ui'
+import { registerSchema } from '@smart-gen/shared'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const name = ref('')
-const email = ref('')
-const password = ref('')
+const { handleSubmit, errors } = useForm({
+  validationSchema: toTypedSchema(registerSchema),
+})
 
-async function handleRegister() {
-  if (!name.value || !email.value || !password.value) return
+const { value: name } = useField<string>('name')
+const { value: email } = useField<string>('email')
+const { value: password } = useField<string>('password')
+const { value: confirmPassword } = useField<string>('confirmPassword')
 
+const onSubmit = handleSubmit(async (values) => {
   try {
     await authStore.signUp({
-      email: email.value,
-      password: password.value,
+      email: values.email,
+      password: values.password,
       options: {
         data: {
-          name: name.value,
+          name: values.name,
         },
       },
     })
@@ -30,7 +33,7 @@ async function handleRegister() {
   } catch (error) {
     console.error('Falha no cadastro:', error)
   }
-}
+})
 </script>
 
 <template>
@@ -41,7 +44,7 @@ async function handleRegister() {
         <p class="text-muted-foreground text-sm">Preencha seus dados para se cadastrar</p>
       </div>
 
-      <form @submit.prevent="handleRegister" class="space-y-4">
+      <form @submit.prevent="onSubmit" class="space-y-4">
         <div class="space-y-2">
           <Label for="name">Nome completo</Label>
           <Input
@@ -49,9 +52,11 @@ async function handleRegister() {
             v-model="name"
             type="text"
             placeholder="Seu nome"
-            required
             :disabled="authStore.loading"
           />
+          <p v-if="errors.name" class="text-sm font-medium text-destructive">
+            {{ errors.name }}
+          </p>
         </div>
 
         <div class="space-y-2">
@@ -59,22 +64,34 @@ async function handleRegister() {
           <Input
             id="email"
             v-model="email"
-            type="email"
+            type="text"
             placeholder="m@exemplo.com"
-            required
             :disabled="authStore.loading"
           />
+          <p v-if="errors.email" class="text-sm font-medium text-destructive">
+            {{ errors.email }}
+          </p>
         </div>
 
         <div class="space-y-2">
           <Label for="password">Senha</Label>
+          <Input id="password" v-model="password" type="password" :disabled="authStore.loading" />
+          <p v-if="errors.password" class="text-sm font-medium text-destructive">
+            {{ errors.password }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <Label for="confirmPassword">Confirmar senha</Label>
           <Input
-            id="password"
-            v-model="password"
+            id="confirmPassword"
+            v-model="confirmPassword"
             type="password"
-            required
             :disabled="authStore.loading"
           />
+          <p v-if="errors.confirmPassword" class="text-sm font-medium text-destructive">
+            {{ errors.confirmPassword }}
+          </p>
         </div>
 
         <p v-if="authStore.hasError" class="text-sm font-medium text-destructive">
@@ -85,6 +102,13 @@ async function handleRegister() {
           <span v-if="authStore.loading">Cadastrando...</span>
           <span v-else>Criar conta</span>
         </Button>
+
+        <p class="text-center text-sm text-muted-foreground pt-2">
+          Já possui conta? 
+          <RouterLink to="/entrar" class="font-medium text-primary hover:underline transition-colors">
+            Faça login
+          </RouterLink>
+        </p>
       </form>
     </div>
   </main>

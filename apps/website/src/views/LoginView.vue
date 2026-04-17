@@ -1,27 +1,29 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useForm, useField } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
 import { useAuthStore } from '@/stores/auth.store'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button, Input, Label } from '@/components/ui'
+import { loginSchema } from '@smart-gen/shared'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('')
-const password = ref('')
+const { handleSubmit, errors } = useForm({
+  validationSchema: toTypedSchema(loginSchema),
+})
 
-async function handleLogin(): Promise<void> {
-  if (!email.value || !password.value) return
+const { value: email } = useField<string>('email')
+const { value: password } = useField<string>('password')
 
+const onSubmit = handleSubmit(async (values) => {
   try {
-    await authStore.signIn({ email: email.value, password: password.value })
+    await authStore.signIn({ email: values.email, password: values.password })
     router.push('/dashboard')
   } catch (error) {
     console.error('Falha no login:', error)
   }
-}
+})
 </script>
 
 <template>
@@ -32,28 +34,27 @@ async function handleLogin(): Promise<void> {
         <p class="text-muted-foreground text-sm">Insira suas credenciais para acessar sua conta</p>
       </div>
 
-      <form @submit.prevent="handleLogin" class="space-y-4">
+      <form @submit.prevent="onSubmit" class="space-y-4">
         <div class="space-y-2">
           <Label for="email">E-mail</Label>
           <Input
             id="email"
             v-model="email"
-            type="email"
+            type="text"
             placeholder="m@exemplo.com"
-            required
             :disabled="authStore.loading"
           />
+          <p v-if="errors.email" class="text-sm font-medium text-destructive">
+            {{ errors.email }}
+          </p>
         </div>
 
         <div class="space-y-2">
           <Label for="password">Senha</Label>
-          <Input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            :disabled="authStore.loading"
-          />
+          <Input id="password" v-model="password" type="password" :disabled="authStore.loading" />
+          <p v-if="errors.password" class="text-sm font-medium text-destructive">
+            {{ errors.password }}
+          </p>
         </div>
 
         <p v-if="authStore.hasError" class="text-sm font-medium text-destructive">
@@ -64,7 +65,15 @@ async function handleLogin(): Promise<void> {
           <span v-if="authStore.loading">Entrando...</span>
           <span v-else>Entrar</span>
         </Button>
+        
+        <p class="text-center text-sm text-muted-foreground pt-2">
+          Não tem uma conta? 
+          <RouterLink to="/cadastrar" class="font-medium text-primary hover:underline transition-colors">
+            Cadastre-se
+          </RouterLink>
+        </p>
       </form>
     </div>
   </main>
 </template>
+
