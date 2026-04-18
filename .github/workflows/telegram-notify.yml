@@ -7,11 +7,19 @@ on:
     types: [opened, closed]
   pull_request:
     types: [opened, closed]
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
+  workflow_run:
+    workflows: [CI, Deploy Website]
+    types: [completed]
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      # ── Push ──
       - name: Notify Push
         if: github.event_name == 'push'
         uses: appleboy/telegram-action@v1.0.0
@@ -28,6 +36,7 @@ jobs:
 
             🔗 [Ver alterações](${{ github.event.compare }})
 
+      # ── Pull Request ──
       - name: Notify Pull Request
         if: github.event_name == 'pull_request'
         uses: appleboy/telegram-action@v1.0.0
@@ -44,6 +53,7 @@ jobs:
 
             🔗 [Ver PR](${{ github.event.pull_request.html_url }})
 
+      # ── Issue ──
       - name: Notify Issue
         if: github.event_name == 'issues'
         uses: appleboy/telegram-action@v1.0.0
@@ -58,3 +68,69 @@ jobs:
             📌 *Título:* ${{ github.event.issue.title }}
 
             🔗 [Ver Issue](${{ github.event.issue.html_url }})
+
+      # ── PR Review (aprovação / alterações solicitadas) ──
+      - name: Notify PR Review
+        if: github.event_name == 'pull_request_review'
+        uses: appleboy/telegram-action@v1.0.0
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            ${{ github.event.review.state == 'approved' && '✅' || github.event.review.state == 'changes_requested' && '❌' || '💬' }} *Code Review no PR*
+
+            👤 *Revisor:* ${{ github.event.review.user.login }}
+            📌 *PR:* ${{ github.event.pull_request.title }}
+            📊 *Veredicto:* ${{ github.event.review.state == 'approved' && 'Aprovado ✅' || github.event.review.state == 'changes_requested' && 'Alterações Solicitadas ❌' || 'Comentário 💬' }}
+
+            🔗 [Ver Review](${{ github.event.review.html_url }})
+
+      # ── Comentário em Review de PR ──
+      - name: Notify PR Review Comment
+        if: github.event_name == 'pull_request_review_comment'
+        uses: appleboy/telegram-action@v1.0.0
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            💬 *Comentário em Review*
+
+            👤 *Autor:* ${{ github.event.comment.user.login }}
+            📌 *PR:* ${{ github.event.pull_request.title }}
+            📝 *Comentário:* ${{ github.event.comment.body }}
+
+            🔗 [Ver comentário](${{ github.event.comment.html_url }})
+
+      # ── Status de Workflow (CI / Deploy) ──
+      - name: Notify Deploy Success
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.name == 'Deploy Website'
+        uses: appleboy/telegram-action@v1.0.0
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            🟢 *Deploy concluído com sucesso!*
+
+            📦 *Branch:* `${{ github.event.workflow_run.head_branch }}`
+            👤 *Autor:* ${{ github.event.workflow_run.actor.login }}
+
+            🌍 [Acessar Smart Gen](https://smartgen-iot.vercel.app/)
+            🔗 [Ver logs](${{ github.event.workflow_run.html_url }})
+
+      - name: Notify Workflow Failure
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+        uses: appleboy/telegram-action@v1.0.0
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            🔴 *${{ github.event.workflow_run.name }} falhou!*
+
+            📦 *Branch:* `${{ github.event.workflow_run.head_branch }}`
+            👤 *Autor:* ${{ github.event.workflow_run.actor.login }}
+
+            🔗 [Ver logs](${{ github.event.workflow_run.html_url }})
