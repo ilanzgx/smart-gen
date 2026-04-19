@@ -1,11 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import router from '../index'
-import { useAuthStore } from '@/stores/auth.store'
+
+vi.mock('@/views/HomeView.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/views/NotFoundView.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/views/LoginView.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/views/DashboardView.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/views/ProfileView.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/views/RegisterView.vue', () => ({ default: { template: '<div />' } }))
 
 vi.mock('@/stores/auth.store', () => ({
   useAuthStore: vi.fn(),
 }))
+
+import router from '../index'
+import { useAuthStore } from '@/stores/auth.store'
 
 describe('router rotas e configurações testes unitários', () => {
   describe('router navigation', () => {
