@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { supabase } from '@/lib/supabase'
-import { useAuthStore } from '@/stores/auth.store'
 import { getUser } from '@smart-gen/supabase'
 import { onMounted, ref } from 'vue'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 import WaterLevelChart from '@/components/generators/WaterLevelChart.vue'
+import HeaderComponent from '@/components/HeaderComponent.vue'
 
 const name = ref<string | null>(null)
 
 const defaultGeneratorId = ref('11111111-1111-1111-1111-111111111111')
-
-function logout() {
-  useAuthStore().signOut()
-}
 
 onMounted(async () => {
   const userResponse = await getUser(supabase)
@@ -21,16 +17,11 @@ onMounted(async () => {
 </script>
 
 <template>
+  <HeaderComponent />
   <main class="flex min-h-screen items-center justify-center p-4 mx-8">
     <div class="w-full space-y-6">
       <div class="space-y-2 text-center">
         <h1 class="text-2xl font-bold tracking-tight">👋 Olá, {{ name }}</h1>
-      </div>
-
-      <div class="space-y-2 text-center">
-        <RouterLink to="/">
-          <button @click="logout" class="text-blue-600 hover:underline">Logout</button>
-        </RouterLink>
       </div>
 
       <div class="mt-8">
