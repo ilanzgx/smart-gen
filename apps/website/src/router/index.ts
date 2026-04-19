@@ -78,6 +78,12 @@ const router = createRouter({
  */
 router.beforeEach((to) => {
   const authStore = useAuthStore()
+  
+  // Limpar erros de autenticação ao trocar de rota
+  if (authStore.hasError) {
+    authStore.clearError()
+  }
+
   const isPublic = to.meta.public === true
 
   // Se a rota não for pública e o usuário não estiver autenticado,

@@ -9,6 +9,7 @@ import {
   type SignUpCredentials,
   type AuthSession,
 } from '@smart-gen/supabase'
+import { translateAuthError } from '@smart-gen/shared'
 import { supabase } from '@/lib/supabase'
 import { ref, computed } from 'vue'
 
@@ -38,7 +39,10 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = data.user
       session.value = data.session
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erro ao fazer login'
+      error.value = translateAuthError(
+        err instanceof Error ? err.message : undefined,
+        'Erro ao fazer login',
+      )
       throw err
     } finally {
       loading.value = false
@@ -60,7 +64,10 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = data.user
       session.value = data.session
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erro ao cadastrar'
+      error.value = translateAuthError(
+        err instanceof Error ? err.message : undefined,
+        'Erro ao cadastrar',
+      )
       throw err
     } finally {
       loading.value = false
@@ -80,7 +87,10 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = null
       error.value = null
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erro ao sair'
+      error.value = translateAuthError(
+        err instanceof Error ? err.message : undefined,
+        'Erro ao sair',
+      )
       throw err
     } finally {
       loading.value = false
@@ -114,6 +124,13 @@ export const useAuthStore = defineStore('auth', () => {
     return unsubscribe ?? (() => {})
   }
 
+  /**
+   * Limpa o estado de erro atual
+   */
+  function clearError() {
+    error.value = null
+  }
+
   return {
     user,
     session,
@@ -126,5 +143,6 @@ export const useAuthStore = defineStore('auth', () => {
     signUp,
     signOut,
     initializeAuth,
+    clearError,
   }
 })

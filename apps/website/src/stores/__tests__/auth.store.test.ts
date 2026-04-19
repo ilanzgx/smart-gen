@@ -65,17 +65,18 @@ describe('Auth Store - Testes Unitários', () => {
     it('deve capturar erro em falha de login', async () => {
       // Arrange
       const store = useAuthStore()
-      const errorMessage = 'Invalid credentials'
-      vi.mocked(supabasePkg.signIn).mockRejectedValue(new Error(errorMessage))
+      const supabaseMessage = 'Invalid login credentials'
+      const expectedMessage = 'E-mail ou senha incorretos.'
+      vi.mocked(supabasePkg.signIn).mockRejectedValue(new Error(supabaseMessage))
 
       // Act & Assert
       await expect(store.signIn({ email: 'wrong@test.com', password: '123' })).rejects.toThrow(
-        errorMessage,
+        supabaseMessage,
       )
 
       // Assert
       expect(store.user).toBeNull()
-      expect(store.error).toBe(errorMessage)
+      expect(store.error).toBe(expectedMessage)
       expect(store.loading).toBe(false)
       expect(store.hasError).toBe(true)
     })
@@ -105,16 +106,17 @@ describe('Auth Store - Testes Unitários', () => {
     it('deve capturar erro em falha de cadastro', async () => {
       // Arrange
       const store = useAuthStore()
-      const errorMessage = 'User already exists'
-      vi.mocked(supabasePkg.signUp).mockRejectedValue(new Error(errorMessage))
+      const supabaseMessage = 'User already registered'
+      const expectedMessage = 'Este e-mail já está cadastrado.'
+      vi.mocked(supabasePkg.signUp).mockRejectedValue(new Error(supabaseMessage))
 
       // Act & Assert
       await expect(store.signUp({ email: 'existing@test.com', password: '123' })).rejects.toThrow(
-        errorMessage,
+        supabaseMessage,
       )
 
       // Assert
-      expect(store.error).toBe(errorMessage)
+      expect(store.error).toBe(expectedMessage)
       expect(store.loading).toBe(false)
     })
   })
@@ -141,14 +143,14 @@ describe('Auth Store - Testes Unitários', () => {
     it('deve capturar erro se o logout falhar', async () => {
       // Arrange
       const store = useAuthStore()
-      const errorMessage = 'Logout failed'
-      vi.mocked(supabasePkg.signOut).mockRejectedValue(new Error(errorMessage))
+      const supabaseMessage = 'Logout failed'
+      vi.mocked(supabasePkg.signOut).mockRejectedValue(new Error(supabaseMessage))
 
       // Act
-      await expect(store.signOut()).rejects.toThrow(errorMessage)
+      await expect(store.signOut()).rejects.toThrow(supabaseMessage)
 
       // Assert
-      expect(store.error).toBe(errorMessage)
+      expect(store.error).toBe('Erro ao sair')
       expect(store.loading).toBe(false)
     })
   })
