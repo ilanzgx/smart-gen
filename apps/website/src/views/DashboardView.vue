@@ -4,7 +4,7 @@ import { getUser } from '@smart-gen/supabase'
 import { onMounted, ref } from 'vue'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 import WaterLevelChart from '@/components/generators/WaterLevelChart.vue'
-import HeaderComponent from '@/components/HeaderComponent.vue'
+import DashboardLayout from '@/components/layouts/DashboardLayout.vue'
 
 const name = ref<string | null>(null)
 
@@ -17,10 +17,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <HeaderComponent />
-  <main class="flex min-h-screen items-center justify-center p-4 mx-8">
+  <DashboardLayout>
     <div class="w-full space-y-6">
-      <div class="space-y-2 text-center">
+      <div class="space-y-2 text-center mt-6">
         <h1 class="text-2xl font-bold tracking-tight">👋 Olá, {{ name }}</h1>
       </div>
 
@@ -36,5 +35,5 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-  </main>
+  </DashboardLayout>
 </template>
