@@ -1,46 +1,43 @@
 <script setup lang="ts">
-import { supabase } from '@/lib/supabase'
-import { getUser } from '@smart-gen/supabase'
 import { onMounted, ref } from 'vue'
-import imagem_G from '@/assets/generic-avatar.svg'
-import Button from '@/components/ui/button/Button.vue'
 import HeaderComponent from '@/components/HeaderComponent.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { Input, Button } from '@/components/ui'
 
 
-const name = ref<string | null>(null)
-const email = useAuthStore().userEmail
+const { user } = useAuthStore()
+const name = ref(user?.user_metadata.name)
+const email = ref(user?.user_metadata.email)
 
-var imagem_generica = ref(imagem_G)
-onMounted(async () => {
-  const userResponse = await getUser(supabase)
-  name.value = userResponse.user_metadata?.name || userResponse.email
+onMounted(() => {
+  console.log(user)
 })
 </script>
 
 <template>
-  <HeaderComponent></HeaderComponent>
-  <main>
-    <div class="mx-2">
-    <Button>← voltar</Button>
-    </div>
-    <div class="bg-gray-200 p-5 mx-50 grid place-content-center rounded-lg">
-      <img class="rounded-full w-35 h-35 shadow-xl m-5" :src="imagem_generica" />
+  <HeaderComponent />
+  <main class="flex justify-center">
+    <div class="mx-2"></div>
+    <div class="bg-gray-200 p-5 grid place-content-center rounded-lg w-[40%]">
+      <img
+        class="rounded-full w-35 h-35 shadow-xl m-5 bg-gray-300 p-2"
+        src="/images/user.svg"
+        alt="User"
+      />
       <hr />
-      <!-- nome do usuario -->
-      <div class="grid place-content-center">
+      <form class="grid place-content-center">
+        <!-- nome do usuario -->
         <label>Nome do usuario:</label>
-        <span class="bg-gray-300 px-3 py-2 rounded-xl">{{ name }}</span>
+        <Input class="bg-gray-300 px-3 py-2 rounded-xl" v-model="name" />
         <!-- email do usuario -->
         <label>Email:</label>
-        <span class="bg-gray-300 px-3 py-2 rounded-xl">{{ email }}</span>
+        <Input class="bg-gray-300 px-3 py-2 rounded-xl" v-model="email" />
         <label>Acesso:</label>
         <span class="bg-gray-300 px-3 py-2 rounded-xl">Admin</span>
-      </div>
-      <Button class="my-3">Alterar perfil</Button>
+        <Button class="bg-blue-500 my-10">Alterar</Button>
+      </form>
     </div>
   </main>
 </template>
 
-<style>
-</style>
+<style></style>
