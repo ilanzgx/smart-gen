@@ -38,7 +38,7 @@ const onSubmit = handleSubmit(async (values) => {
 
 <template>
   <main class="flex min-h-screen">
-    <div class="flex-1 flex items-center justify-center p-8">
+    <div class="flex-1 flex items-center justify-center p-4 sm:p-8">
       <div class="w-full max-w-md">
         <div class="space-y-2 text-center">
           <h1 class="text-2xl font-bold tracking-tight">Criar Conta</h1>
@@ -54,6 +54,7 @@ const onSubmit = handleSubmit(async (values) => {
               id="name"
               v-model="name"
               type="text"
+              autocomplete="name"
               placeholder="Seu nome"
               :disabled="authStore.loading"
             />
@@ -67,7 +68,8 @@ const onSubmit = handleSubmit(async (values) => {
             <Input
               id="email"
               v-model="email"
-              type="text"
+              type="email"
+              autocomplete="email"
               placeholder="m@exemplo.com"
               :disabled="authStore.loading"
             />
@@ -78,7 +80,14 @@ const onSubmit = handleSubmit(async (values) => {
 
           <div class="space-y-2">
             <Label for="password">Senha</Label>
-            <Input id="password" v-model="password" type="password" :disabled="authStore.loading" />
+            <Input
+              id="password"
+              v-model="password"
+              type="password"
+              autocomplete="new-password"
+              placeholder="********"
+              :disabled="authStore.loading"
+            />
             <p v-if="errors.password" class="text-sm font-medium text-destructive">
               {{ errors.password }}
             </p>
@@ -90,6 +99,8 @@ const onSubmit = handleSubmit(async (values) => {
               id="confirmPassword"
               v-model="confirmPassword"
               type="password"
+              autocomplete="new-password"
+              placeholder="********"
               :disabled="authStore.loading"
             />
             <p v-if="errors.confirmPassword" class="text-sm font-medium text-destructive">
@@ -106,11 +117,11 @@ const onSubmit = handleSubmit(async (values) => {
             <span v-else>Criar conta</span>
           </Button>
 
-          <p class="text-center text-sm text-muted-foreground pt-2">
+          <p class="text-center text-sm text-muted-foreground pt-4">
             Já possui conta?
             <RouterLink
               to="/entrar"
-              class="font-medium text-primary hover:underline transition-colors"
+              class="font-bold hover:text-foreground underline-offset-4 hover:underline transition-colors ml-1"
             >
               Faça login
             </RouterLink>

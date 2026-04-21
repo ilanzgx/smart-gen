@@ -28,7 +28,7 @@ const onSubmit = handleSubmit(async (values) => {
 
 <template>
   <main class="flex min-h-screen">
-    <div class="flex-1 flex items-center justify-center p-8">
+    <div class="flex-1 flex items-center justify-center p-4 sm:p-8">
       <div class="w-full max-w-md">
         <div class="space-y-2 text-center">
           <h1 class="text-2xl font-bold tracking-tight">Entrar</h1>
@@ -45,7 +45,8 @@ const onSubmit = handleSubmit(async (values) => {
             <Input
               id="email"
               v-model="email"
-              type="text"
+              type="email"
+              autocomplete="email"
               placeholder="m@exemplo.com"
               :disabled="authStore.loading"
             />
@@ -56,10 +57,25 @@ const onSubmit = handleSubmit(async (values) => {
 
           <div class="space-y-2">
             <Label for="password">Senha</Label>
-            <Input id="password" v-model="password" type="password" :disabled="authStore.loading" />
+            <Input
+              id="password"
+              v-model="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="********"
+              :disabled="authStore.loading"
+            />
             <p v-if="errors.password" class="text-sm font-medium text-destructive">
               {{ errors.password }}
             </p>
+            <div class="flex justify-end mt-1">
+              <RouterLink
+                to="/recuperar-senha"
+                class="text-sm font-medium text-muted-foreground hover:text-foreground underline-offset-4 hover:underline transition-colors"
+              >
+                Esqueceu a sua senha?
+              </RouterLink>
+            </div>
           </div>
 
           <p v-if="authStore.hasError" class="text-sm font-medium text-destructive">
@@ -71,11 +87,11 @@ const onSubmit = handleSubmit(async (values) => {
             <span v-else>Entrar</span>
           </Button>
 
-          <p class="text-center text-sm text-muted-foreground pt-2">
+          <p class="text-center text-sm text-muted-foreground pt-4">
             Não tem uma conta?
             <RouterLink
               to="/cadastrar"
-              class="font-medium text-primary hover:underline transition-colors"
+              class="font-bold hover:text-foreground underline-offset-4 hover:underline transition-colors ml-1"
             >
               Cadastre-se
             </RouterLink>
