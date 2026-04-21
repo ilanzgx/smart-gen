@@ -18,18 +18,23 @@ onMounted(async () => {
 
 <template>
   <DashboardLayout>
-    <div class="w-full space-y-6">
-      <div class="space-y-2 text-center mt-6">
-        <h1 class="text-2xl font-bold tracking-tight">👋 Olá, {{ name }}</h1>
+    <div class="w-full space-y-6 md:space-y-8">
+      <!-- Alinhamento adaptativo (Mobile friendly) -->
+      <div class="space-y-2 text-center sm:text-left mt-2 md:mt-6">
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">👋 Olá, {{ name }}</h1>
       </div>
 
-      <div class="mt-8">
-        <p class="text-muted-foreground text-xs">Dados do Gerador: {{ defaultGeneratorId }}</p>
-        <div class="flex justify-center items-center border-t pt-6">
-          <div class="w-1/2 pr-2">
+      <div class="mt-6 md:mt-8">
+        <p class="text-muted-foreground text-xs md:text-sm mb-4">
+          Dados do Gerador: <span class="font-mono">{{ defaultGeneratorId }}</span>
+        </p>
+
+        <!-- Grid Responsivo (Mobile friendly) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-6">
+          <div class="w-full">
             <TemperatureChart :generator-id="defaultGeneratorId" />
           </div>
-          <div class="w-1/2 pl-2">
+          <div class="w-full">
             <WaterLevelChart :generator-id="defaultGeneratorId" />
           </div>
         </div>

@@ -13,8 +13,8 @@ const navItems = [
 </script>
 
 <template>
-  <aside class="w-64 border-r shrink-0">
-    <div class="flex flex-col h-full p-4">
+  <aside class="w-64 border-r shrink-0 bg-white h-full shadow-2xl md:shadow-none z-50 flex flex-col">
+    <div class="flex flex-col h-full p-4 overflow-y-auto w-full">
       <!-- Logo -->
       <div class="mb-8 px-2">
         <RouterLink to="/dashboard">
