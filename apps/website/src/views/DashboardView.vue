@@ -4,6 +4,7 @@ import { getUser } from '@smart-gen/supabase'
 import { onMounted, ref } from 'vue'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 import WaterLevelChart from '@/components/generators/WaterLevelChart.vue'
+import WaterGauge from '@/components/WaterGauge.vue'
 import DashboardLayout from '@/components/layouts/DashboardLayout.vue'
 
 const name = ref<string | null>(null)
@@ -30,12 +31,15 @@ onMounted(async () => {
         </p>
 
         <!-- Grid Responsivo (Mobile friendly) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 border-t pt-6">
           <div class="w-full">
             <TemperatureChart :generator-id="defaultGeneratorId" />
           </div>
           <div class="w-full">
             <WaterLevelChart :generator-id="defaultGeneratorId" />
+          </div>
+          <div class="w-full flex items-center justify-center">
+            <WaterGauge :value="71.6" />
           </div>
         </div>
       </div>
