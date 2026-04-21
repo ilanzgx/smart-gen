@@ -13,7 +13,9 @@ const navItems = [
 </script>
 
 <template>
-  <aside class="w-64 border-r shrink-0 bg-white h-full shadow-2xl md:shadow-none z-50 flex flex-col">
+  <aside
+    class="w-64 border-r shrink-0 bg-white h-full shadow-2xl md:shadow-none z-50 flex flex-col"
+  >
     <div class="flex flex-col h-full p-4 overflow-y-auto w-full">
       <!-- Logo -->
       <div class="mb-8 px-2">
@@ -23,7 +25,7 @@ const navItems = [
       </div>
 
       <!-- Nav principal -->
-      <nav class="space-y-1">
+      <nav class="flex-1 space-y-1">
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
@@ -38,7 +40,7 @@ const navItems = [
       </nav>
 
       <!-- Configurações -->
-      <div class="mt-auto border-t pt-3">
+      <div class="border-t pt-3">
         <RouterLink
           to="/configuracoes"
           class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full"
