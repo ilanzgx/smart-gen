@@ -5,10 +5,14 @@ import {
   getReadings,
   getReadingById,
   getReadingsByGeneratorId,
+  getLastReadingByGeneratorId,
 } from "../queries";
 
 describe("readings.queries testes unitários", () => {
   const mockSingle = vi.fn();
+  const mockMaybeSingle = vi.fn();
+  const mockOrder = vi.fn().mockReturnThis();
+  const mockLimit = vi.fn();
   const mockEq = vi.fn();
   const mockSelect = vi.fn();
   const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
@@ -28,8 +32,18 @@ describe("readings.queries testes unitários", () => {
 
     mockEq.mockReturnValue({
       single: mockSingle,
+      maybeSingle: mockMaybeSingle,
+      order: mockOrder,
       then: (onFulfilled: any) =>
         Promise.resolve({ data: [], error: null }).then(onFulfilled),
+    });
+
+    mockOrder.mockReturnValue({
+      limit: mockLimit,
+    });
+
+    mockLimit.mockReturnValue({
+      maybeSingle: mockMaybeSingle,
     });
   });
 
@@ -78,6 +92,23 @@ describe("readings.queries testes unitários", () => {
     expect(sut).toEqual(mockData);
   });
 
+  it("deve buscar a leitura mais recente por ID do gerador", async () => {
+    // Arrange
+    const mockData = { id: "reg-latest", level: 80 };
+    mockMaybeSingle.mockResolvedValue({ data: mockData, error: null });
+
+    // Act
+    const sut = await getLastReadingByGeneratorId(mockSupabase, "gen-123");
+
+    // Assert
+    expect(mockSupabase.from).toHaveBeenCalledWith("registro");
+    expect(mockEq).toHaveBeenCalledWith("gerador_id", "gen-123");
+    expect(mockOrder).toHaveBeenCalledWith("timestamp", { ascending: false });
+    expect(mockLimit).toHaveBeenCalledWith(1);
+    expect(mockMaybeSingle).toHaveBeenCalled();
+    expect(sut).toEqual(mockData);
+  });
+
   it("deve lançar erro se a busca geral falhar", async () => {
     // Arrange
     const mockError = { message: "Erro de rede" };
@@ -97,6 +128,17 @@ describe("readings.queries testes unitários", () => {
     // Act & Assert
     await expect(
       getReadingsByGeneratorId(mockSupabase, "gen-invalid"),
+    ).rejects.toEqual(mockError);
+  });
+
+  it("deve lançar erro se a busca pela última leitura falhar", async () => {
+    // Arrange
+    const mockError = { message: "Erro ao buscar última leitura" };
+    mockMaybeSingle.mockResolvedValue({ data: null, error: mockError });
+
+    // Act & Assert
+    await expect(
+      getLastReadingByGeneratorId(mockSupabase, "gen-123"),
     ).rejects.toEqual(mockError);
   });
 });
