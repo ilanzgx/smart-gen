@@ -1,19 +1,29 @@
 <script setup lang="ts">
+import { onMounted, ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { supabase } from '@/lib/supabase'
-import { getUser } from '@smart-gen/supabase'
-import { onMounted, ref } from 'vue'
+import { getLastReadingByGeneratorId } from '@smart-gen/supabase'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 import WaterLevelChart from '@/components/generators/WaterLevelChart.vue'
 import WaterGauge from '@/components/WaterGauge.vue'
 import DashboardLayout from '@/components/layouts/DashboardLayout.vue'
+import { useAuthStore } from '@/stores/auth.store'
 
-const name = ref<string | null>(null)
+const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
 
-const defaultGeneratorId = ref('11111111-1111-1111-1111-111111111111')
+const name = computed(() => user.value?.user_metadata?.name)
+
+/*
+ * Geradores de exemplo:
+ * 11111111-1111-1111-1111-111111111111 e 22222222-2222-2222-2222-222222222222
+ */
+const defaultGeneratorId = ref('22222222-2222-2222-2222-222222222222')
+const waterLevel = ref(0)
 
 onMounted(async () => {
-  const userResponse = await getUser(supabase)
-  name.value = userResponse.user_metadata?.name || userResponse.email
+  const lastReading = await getLastReadingByGeneratorId(supabase, defaultGeneratorId.value)
+  waterLevel.value = lastReading?.nivel_agua ?? 0
 })
 </script>
 
@@ -39,7 +49,7 @@ onMounted(async () => {
             <WaterLevelChart :generator-id="defaultGeneratorId" />
           </div>
           <div class="w-full flex items-center justify-center">
-            <WaterGauge :value="71.6" />
+            <WaterGauge :value="waterLevel" />
           </div>
         </div>
       </div>
