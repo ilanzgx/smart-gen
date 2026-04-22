@@ -7,7 +7,7 @@ import type { Leitura } from "./types";
  * @returns {Promise<Leitura[]>} - Dados de todas as leituras.
  */
 export const getReadings = async (
-  supabase: SupabaseClient,
+  supabase: SupabaseClient
 ): Promise<Leitura[]> => {
   const { data, error } = await supabase.from("registro").select("*");
 
@@ -24,7 +24,7 @@ export const getReadings = async (
  */
 export const getReadingById = async (
   supabase: SupabaseClient,
-  id: string,
+  id: string
 ): Promise<Leitura> => {
   const { data, error } = await supabase
     .from("registro")
@@ -45,7 +45,7 @@ export const getReadingById = async (
  */
 export const getReadingsByGeneratorId = async (
   supabase: SupabaseClient,
-  generatorId: string,
+  generatorId: string
 ): Promise<Leitura[]> => {
   const { data, error } = await supabase
     .from("registro")
@@ -55,4 +55,27 @@ export const getReadingsByGeneratorId = async (
   if (error) throw error;
 
   return data as Leitura[];
+};
+
+/**
+ * Retorna a leitura mais recente de um gerador.
+ * @param {SupabaseClient} supabase - Instância do Supabase.
+ * @param {string} generatorId - ID do gerador.
+ * @returns {Promise<Leitura>} - Dados da leitura mais recente do gerador.
+ */
+export const getLastReadingByGeneratorId = async (
+  supabase: SupabaseClient,
+  generatorId: string
+): Promise<Leitura> => {
+  const { data, error } = await supabase
+    .from("registro")
+    .select("*")
+    .eq("gerador_id", generatorId)
+    .order("timestamp", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data as Leitura;
 };
