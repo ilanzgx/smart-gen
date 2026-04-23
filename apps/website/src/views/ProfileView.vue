@@ -17,9 +17,9 @@ onMounted(() => {
   <DashboardLayout>
     <main class="flex justify-center">
       <div class="mx-2"></div>
-      <div class="bg-gray-200 p-5 grid place-content-center rounded-lg w-[40%]">
+      <div class="md:bg-gray-200 p-5 grid md:place-content-center rounded-lg md:w-[40%]">
         <img
-          class="rounded-full w-35 h-35 shadow-xl m-5 bg-gray-300 p-2"
+          class="mx-auto rounded-full w-35 h-35 shadow-xl m-5 bg-gray-300 p-2"
           src="/images/user.svg"
           alt="User"
         />
