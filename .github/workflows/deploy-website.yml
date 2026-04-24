@@ -1,7 +1,10 @@
 name: Deploy Website
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
     branches:
       - main
 
@@ -17,6 +20,7 @@ jobs:
   deploy:
     name: Build & Deploy to Vercel
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout
@@ -35,14 +39,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Lint and Type-check
-        run: |
-          pnpm --filter @smart-gen/website lint
-          pnpm --filter @smart-gen/website type-check
-
-      - name: Unit tests
-        run: pnpm --filter @smart-gen/website test:unit --run
 
       - name: Pull Vercel Environment
         run: npx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
