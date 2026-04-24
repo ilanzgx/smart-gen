@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appId: "com.smartgen.mobile",
   appName: "Smart Gen",
   webDir: "../website/dist",
-  bundledWebRuntime: false,
   plugins: {
     Keyboard: {
       resize: KeyboardResize.Native,
