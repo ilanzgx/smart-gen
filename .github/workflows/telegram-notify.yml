@@ -1,12 +1,11 @@
 name: Telegram Notification
-
 on:
   push:
     branches: [main, develop]
   issues:
-    types: [opened, closed]
+    types: [opened, closed, reopened]
   pull_request:
-    types: [opened, closed]
+    types: [opened, closed, reopened, synchronize]
   pull_request_review:
     types: [submitted]
   pull_request_review_comment:
@@ -22,115 +21,132 @@ jobs:
       # ── Push ──
       - name: Notify Push
         if: github.event_name == 'push'
-        uses: appleboy/telegram-action@v1.0.0
+        uses: appleboy/telegram-action@v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
+          format: html
+          disable_web_page_preview: true
           message: |
-            🚀 *Push na ${{ github.ref_name }}*
+            🚀 <b>Push Detectado</b>
 
-            👤 *Autor:* ${{ github.actor }}
-            📦 *Branch:* `${{ github.ref_name }}`
-            📝 *Commit:* ${{ github.event.head_commit.message }}
+            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
+            👤 <b>Autor:</b> ${{ github.actor }}
+            📦 <b>Branch:</b> <code>${{ github.ref_name }}</code>
+            📝 <b>Resumo:</b> <i>${{ github.event.head_commit.message }}</i>
 
-            🔗 [Ver alterações](${{ github.event.compare }})
+            🔗 <a href="${{ github.event.compare }}">Comparar Alterações (Diff)</a>
 
       # ── Pull Request ──
       - name: Notify Pull Request
         if: github.event_name == 'pull_request'
-        uses: appleboy/telegram-action@v1.0.0
+        uses: appleboy/telegram-action@v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
+          format: html
+          disable_web_page_preview: true
           message: |
-            🔀 *Pull Request ${{ github.event.action }}*
+            🔀 <b>Pull Request: ${{ github.event.action }}</b>
 
-            👤 *Autor:* ${{ github.event.pull_request.user.login }}
-            📌 *Título:* ${{ github.event.pull_request.title }}
-            📦 *Branch:* `${{ github.event.pull_request.head.ref }}` → `${{ github.event.pull_request.base.ref }}`
-
-            🔗 [Ver PR](${{ github.event.pull_request.html_url }})
+            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
+            👤 <b>Autor:</b> ${{ github.event.pull_request.user.login }}
+            📌 <b>PR #${{ github.event.pull_request.number }}</b>
+            📦 <b>Merge:</b> <code>${{ github.event.pull_request.head.ref }}</code> → <code>${{ github.event.pull_request.base.ref }}</code>
+            📈 <b>Linhas:</b> +${{ github.event.pull_request.additions }} adicionadas / -${{ github.event.pull_request.deletions }} deletadas
+            🔗 <a href="${{ github.event.pull_request.html_url }}">Verificar Pull Request</a>
 
       # ── Issue ──
       - name: Notify Issue
         if: github.event_name == 'issues'
-        uses: appleboy/telegram-action@v1.0.0
+        uses: appleboy/telegram-action@v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
+          format: html
+          disable_web_page_preview: true
           message: |
-            📋 *Issue ${{ github.event.action }}*
+            📋 <b>Issue: ${{ github.event.action }}</b>
 
-            👤 *Autor:* ${{ github.event.issue.user.login }}
-            📌 *Título:* ${{ github.event.issue.title }}
+            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
+            👤 <b>Autor:</b> ${{ github.event.issue.user.login }}
+            📌 <b>Issue #${{ github.event.issue.number }}</b>
 
-            🔗 [Ver Issue](${{ github.event.issue.html_url }})
+            🔗 <a href="${{ github.event.issue.html_url }}">Analisar Tarefa (Issue)</a>
 
-      # ── PR Review (aprovação / alterações solicitadas) ──
+      # ── PR Review ──
       - name: Notify PR Review
         if: github.event_name == 'pull_request_review'
-        uses: appleboy/telegram-action@v1.0.0
+        uses: appleboy/telegram-action@v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
+          format: html
+          disable_web_page_preview: true
           message: |
-            ${{ github.event.review.state == 'approved' && '✅' || github.event.review.state == 'changes_requested' && '❌' || '💬' }} *Code Review no PR*
+            ${{ startsWith(github.event.review.user.login, 'coderabbitai') && '🐰 <b>Aviso: CodeRabbit Scanning</b>' || (github.event.review.state == 'approved' && '✅ <b>LGTME! Code Review Aplicado</b>' || github.event.review.state == 'changes_requested' && '❌ <b>Code Review Aplicado</b>' || '💬 <b>Code Review Aplicado</b>') }}
 
-            👤 *Revisor:* ${{ github.event.review.user.login }}
-            📌 *PR:* ${{ github.event.pull_request.title }}
-            📊 *Veredicto:* ${{ github.event.review.state == 'approved' && 'Aprovado ✅' || github.event.review.state == 'changes_requested' && 'Alterações Solicitadas ❌' || 'Comentário 💬' }}
+            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
+            👤 <b>Revisor:</b> ${{ github.event.review.user.login }}
+            📌 <b>PR #${{ github.event.pull_request.number }}</b>
+            📊 <b>Status:</b> <b>${{ github.event.review.state == 'approved' && 'Aprovado' || github.event.review.state == 'changes_requested' && 'Ajustes Exigidos (Blocked)' || 'Comentário Geral' }}</b>
 
-            🔗 [Ver Review](${{ github.event.review.html_url }})
+            🔗 <a href="${{ github.event.review.html_url }}">Ler Feedback</a>
 
       # ── Comentário em Review de PR ──
       - name: Notify PR Review Comment
         if: github.event_name == 'pull_request_review_comment'
-        uses: appleboy/telegram-action@v1.0.0
+        uses: appleboy/telegram-action@v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
+          format: html
+          disable_web_page_preview: true
           message: |
-            💬 *Comentário em Review*
+            ${{ startsWith(github.event.comment.user.login, 'coderabbitai') && '🐰 <b>Novo Feedback do CodeRabbit</b>' || '💬 <b>Novo Comentário no Arquivo</b>' }}
 
-            👤 *Autor:* ${{ github.event.comment.user.login }}
-            📌 *PR:* ${{ github.event.pull_request.title }}
-            📝 *Comentário:* ${{ github.event.comment.body }}
+            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
+            👤 <b>Autor:</b> ${{ github.event.comment.user.login }}
+            📌 <b>PR #${{ github.event.pull_request.number }}</b>
+            🔍 <b>Ação:</b> Deixou um comentário detalhado em uma linha específica do código.
 
-            🔗 [Ver comentário](${{ github.event.comment.html_url }})
+            🔗 <a href="${{ github.event.comment.html_url }}">Acessar Comentário</a>
 
-      # ── Status de Workflow (CI / Deploy) ──
+      # ── Status de Workflow (Deploy) ──
       - name: Notify Deploy Success
         if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.name == 'Deploy Website'
-        uses: appleboy/telegram-action@v1.0.0
+        uses: appleboy/telegram-action@v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
+          format: html
+          disable_web_page_preview: true
           message: |
-            🟢 *Deploy concluído com sucesso!*
+            🟢 <b>Deploy Concluído</b>
 
-            📦 *Branch:* `${{ github.event.workflow_run.head_branch }}`
-            👤 *Autor:* ${{ github.event.workflow_run.actor.login }}
+            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
+            📦 <b>Branch:</b> <code>${{ github.event.workflow_run.head_branch }}</code>
 
-            🌍 [Acessar Smart Gen](https://smartgen-iot.vercel.app/)
-            🔗 [Ver logs](${{ github.event.workflow_run.html_url }})
+            🌍 <a href="https://smartgen-iot.vercel.app/">Testar Ambiente Online</a>
+            🔗 <a href="${{ github.event.workflow_run.html_url }}">Logs do GitHub Actions</a>
 
+      # ── Status de Workflow (Falhas Geral) ──
       - name: Notify Workflow Failure
         if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
-        uses: appleboy/telegram-action@v1.0.0
+        uses: appleboy/telegram-action@v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
+          format: html
+          disable_web_page_preview: true
           message: |
-            🔴 *${{ github.event.workflow_run.name }} falhou!*
+            🔴 <b>FALHA NA PIPELINE (CI/CD)</b>
 
-            📦 *Branch:* `${{ github.event.workflow_run.head_branch }}`
-            👤 *Autor:* ${{ github.event.workflow_run.actor.login }}
+            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
+            🛠 <b>Pipeline:</b> ${{ github.event.workflow_run.name }}
+            📦 <b>Branch de Origem:</b> <code>${{ github.event.workflow_run.head_branch }}</code>
+            👤 <b>Responsável:</b> ${{ github.event.workflow_run.actor.login }}
 
-            🔗 [Ver logs](${{ github.event.workflow_run.html_url }})
+            ⚠️ <b>Atenção:</b> A esteira de verificação quebrou. Favor corrigir imediatamente para evitar bloqueio da branch.
+
+            🔗 <a href="${{ github.event.workflow_run.html_url }}">Analisar Logs de Erro</a>
