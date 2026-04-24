@@ -20,7 +20,7 @@ const name = computed(() => user.value?.user_metadata?.name)
  * Geradores de exemplo:
  * 11111111-1111-1111-1111-111111111111 e 22222222-2222-2222-2222-222222222222
  */
-const defaultGeneratorId = ref('22222222-2222-2222-2222-222222222222')
+const defaultGeneratorId = ref('11111111-1111-1111-1111-111111111111')
 const lastWaterLevel = ref(0)
 const lastTemperature = ref(0)
 const lastTimestamp = ref<string | null>(null)
@@ -137,7 +137,7 @@ const formattedLastSync = computed(() => {
             </div>
             <div class="mt-auto">
               <span class="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
-                {{ lastTemperature
+                {{ lastTemperature.toFixed(1)
                 }}<span class="text-xl text-slate-400 font-semibold ml-1">°C</span>
               </span>
               <p class="text-xs text-slate-400 font-medium mt-1">Temperatura do gerador</p>
@@ -161,7 +161,8 @@ const formattedLastSync = computed(() => {
             </div>
             <div class="mt-auto">
               <span class="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
-                {{ lastWaterLevel }}<span class="text-xl text-slate-400 font-semibold ml-1">%</span>
+                {{ lastWaterLevel.toFixed(1)
+                }}<span class="text-xl text-slate-400 font-semibold ml-1">%</span>
               </span>
               <p class="text-xs text-slate-400 font-medium mt-1">Volume de água</p>
             </div>
