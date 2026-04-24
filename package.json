@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "pnpm -r --filter \"@smart-gen/*\" --parallel dev",
     "build": "pnpm -r build",
-    "build:mobile": "pnpm --filter @smart-gen/website build && pnpm --filter @smart-gen/mobile sync",
+    "build:web-mobile": "pnpm --filter @smart-gen/website build && pnpm --filter @smart-gen/mobile sync",
     "test": "pnpm -r test:unit --reporter=tree",
     "check-all": "pnpm -r lint && pnpm -r type-check && pnpm -r test:unit",
     "sync": "git pull --rebase --autostash && pnpm install",
