@@ -6,100 +6,108 @@ import { getReadingsByGeneratorId } from '@smart-gen/supabase'
 import { supabase } from '@/lib/supabase'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const props = defineProps({
-  generatorId: {
-    type: String,
-    required: true,
+const props = defineProps<{
+  generatorId: string
+}>()
+const loading = ref(true)
+const isEmpty = ref(false)
+
+const series = ref<ApexAxisChartSeries>([
+  {
+    name: 'Nível de água',
+    data: [] as { x: number; y: number }[],
   },
-})
+])
 
 const chartOptions: ApexOptions = {
   chart: {
     type: 'area',
-    toolbar: {
-      show: false,
-    },
-    zoom: {
-      enabled: false,
-    },
+    toolbar: { show: false },
+    zoom: { enabled: false },
   },
   stroke: {
     curve: 'smooth',
+    width: 2,
   },
   fill: {
     type: 'gradient',
     gradient: {
       shadeIntensity: 1,
       opacityFrom: 0.45,
-      opacityTo: 0.05,
-      stops: [20, 100, 100, 100],
+      opacityTo: 0.02,
+      stops: [0, 100],
     },
   },
+  dataLabels: { enabled: false },
   xaxis: {
     type: 'datetime',
+    labels: {
+      datetimeUTC: false,
+      format: 'dd/MM HH:mm',
+    },
   },
   yaxis: {
-    title: {
-      text: 'Nível de Água (%)',
-    },
     min: 0,
     max: 100,
+    title: { text: '%' },
     labels: {
-      formatter: (value) => {
-        return value.toFixed(0) + '%'
-      },
+      formatter: (v) => `${v.toFixed(0)}%`,
     },
+  },
+  tooltip: {
+    x: { format: 'dd MMM, HH:mm' },
+    y: { formatter: (v) => `${v.toFixed(1)}%` },
   },
   colors: ['#3b82f6'],
-  tooltip: {
-    x: {
-      format: 'dd MMM HH:mm',
-    },
+  grid: {
+    borderColor: '#f1f5f9',
   },
-}
-
-const loading = ref(true)
-
-const series = ref<ApexAxisChartSeries>([
-  {
-    name: 'Nível de Água',
-    data: [] as { x: number; y: number }[],
-  },
-])
-
-async function fetchGeneratorReadings() {
-  try {
-    const readings = await getReadingsByGeneratorId(supabase, props.generatorId)
-    return readings
-  } catch (error) {
-    console.error('Erro ao buscar leituras de água:', error)
-    return []
-  }
 }
 
 onMounted(async () => {
-  const readings = await fetchGeneratorReadings()
+  try {
+    const readings = await getReadingsByGeneratorId(supabase, props.generatorId)
 
-  series.value = [
-    {
-      name: 'Nível de Água',
-      data: readings.map((reading) => ({
-        x: new Date(reading.timestamp!).getTime(),
-        y: reading.nivel_agua || 0,
-      })),
-    },
-  ]
+    if (!readings.length) {
+      isEmpty.value = true
+      return
+    }
 
-  loading.value = false
+    series.value = [
+      {
+        name: 'Nível de água',
+        data: readings.map((r) => ({
+          x: new Date(r.timestamp!).getTime(),
+          y: r.nivel_agua || 0,
+        })),
+      },
+    ]
+  } catch (error) {
+    console.error('Erro ao buscar leituras de água:', error)
+    isEmpty.value = true
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
 <template>
   <div class="w-full relative min-h-75">
-    <div v-if="loading" class="space-y-3">
-      <Skeleton class="w-full h-75 rounded-lg" />
+    <Skeleton v-if="loading" class="w-full h-75 rounded-lg" />
+
+    <div
+      v-else-if="isEmpty"
+      class="flex items-center justify-center h-75 text-slate-400 text-sm"
+    >
+      Sem dados de nível de água para exibir.
     </div>
 
-    <VueApexCharts v-else width="100%" height="300" :options="chartOptions" :series="series" />
+    <VueApexCharts
+      v-else
+      width="100%"
+      height="300"
+      :options="chartOptions"
+      :series="series"
+    />
   </div>
 </template>
