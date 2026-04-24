@@ -41,6 +41,9 @@ jobs:
 
       - name: Build Web & Sync Mobile
         run: pnpm build:web-mobile
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Build Android APK
         run: |
@@ -62,9 +65,10 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: html
           message: |
-            Build gerada (branch: ${{ github.ref_name }})
+            📦 <b>Novo APK Gerado</b>
 
-            Push feito por: ${{ github.actor }}
-            
-            O arquivo .apk para teste está em anexo.
+            🎯 <b>Branch:</b> <code>${{ github.ref_name }}</code>
+            🛠️ <b>Status:</b> Build Android gerada com sucesso.
+
+            📥 <i>O arquivo .apk para teste está em anexo.</i>
           document: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
