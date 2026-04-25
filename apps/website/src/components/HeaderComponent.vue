@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import Separator from './ui/separator/Separator.vue'
 import Button from './ui/button/Button.vue'
 import { Menu } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 
 // Criação de um evento para abrir a sidebar no mobile
 // No desktop não acontece nada, uma vez que o hambúrguer não aparece
@@ -10,8 +11,13 @@ const emit = defineEmits<{
   (e: 'toggle-sidebar'): void
 }>()
 
+const { signOut } = useAuthStore()
+const router = useRouter()
+
 async function logout() {
-  await useAuthStore().signOut()
+  await signOut()
+
+  router.push({ name: 'login' })
 }
 </script>
 
@@ -38,18 +44,16 @@ async function logout() {
             alt="User"
           />
         </RouterLink>
-        <RouterLink to="/">
-          <Button @click="logout" variant="outline" size="sm" class="hidden md:inline-flex"
-            >Sair</Button
-          >
-          <Button
-            @click="logout"
-            variant="outline"
-            size="sm"
-            class="md:hidden inline-flex h-9 px-3 text-xs"
-            >Sair</Button
-          >
-        </RouterLink>
+        <Button @click="logout" variant="outline" size="sm" class="hidden md:inline-flex"
+          >Sair</Button
+        >
+        <Button
+          @click="logout"
+          variant="outline"
+          size="sm"
+          class="md:hidden inline-flex h-9 px-3 text-xs"
+          >Sair</Button
+        >
       </div>
     </div>
     <Separator class="mb-0 md:mb-2" />
