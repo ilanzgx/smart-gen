@@ -1,0 +1,22 @@
+{
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "apps/mobile/android": true,
+    "apps/mobile/ios": true
+  },
+  "java.project.importOnFirstTimeStartup": "never",
+  "java.autobuild.enabled": false,
+  "java.import.gradle.enabled": false,
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/apps/mobile/android/**",
+    "**/apps/mobile/ios/**"
+  ],
+  "java.project.resourceFilters": [
+    "node_modules",
+    ".git"
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib"
+}
