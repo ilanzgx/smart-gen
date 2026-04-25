@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import AboutView from '../views/AboutView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import LoginView from '@/views/LoginView.vue'
 import DashboardView from '@/views/DashboardView.vue'
@@ -47,6 +48,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/sobre',
+      name: 'about',
+      component: AboutView,
+      alias: ['/about', '/sobre-nos'],
+      meta: {
+        public: true,
+      },
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
@@ -78,7 +88,7 @@ const router = createRouter({
  */
 router.beforeEach((to) => {
   const authStore = useAuthStore()
-  
+
   // Limpar erros de autenticação ao trocar de rota
   if (authStore.hasError) {
     authStore.clearError()
@@ -94,7 +104,10 @@ router.beforeEach((to) => {
 
   // Se o usuário estiver autenticado e tentar acessar a página de login ou registro,
   // redireciona para o dashboard
-  if (authStore.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
+  if (
+    authStore.isAuthenticated &&
+    (to.name === 'login' || to.name === 'register' || to.name === 'home')
+  ) {
     return { name: 'dashboard' }
   }
 })

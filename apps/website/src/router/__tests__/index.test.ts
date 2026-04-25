@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/views/HomeView.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/views/AboutView.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/views/NotFoundView.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/views/LoginView.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/views/DashboardView.vue', () => ({ default: { template: '<div />' } }))
@@ -80,10 +81,10 @@ describe('router rotas e configurações testes unitários', () => {
       authStoreMock.isAuthenticated = true
 
       // Act
-      await router.push('/')
+      await router.push('/about')
 
       // Assert
-      expect(router.currentRoute.value.name).toBe('home')
+      expect(router.currentRoute.value.name).toBe('about')
     })
   })
 
