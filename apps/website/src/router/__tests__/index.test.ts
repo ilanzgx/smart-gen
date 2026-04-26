@@ -8,6 +8,8 @@ vi.mock('@/views/LoginView.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/views/DashboardView.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/views/ProfileView.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/views/RegisterView.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/views/RecoverPasswordView.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/views/UpdatePasswordView.vue', () => ({ default: { template: '<div />' } }))
 
 vi.mock('@/stores/auth.store', () => ({
   useAuthStore: vi.fn(),
@@ -116,6 +118,86 @@ describe('router rotas e configurações testes unitários', () => {
       // Assert
       expect(loginRoute?.meta?.public).toBe(true)
       expect(registerRoute?.meta?.public).toBe(true)
+    })
+
+    it('deve conter as rotas de recuperação e atualização de senha', () => {
+      // Arrange & Act
+      const recoverRoute = router.getRoutes().find((route) => route.name === 'recover-password')
+      const updateRoute = router.getRoutes().find((route) => route.name === 'update-password')
+
+      // Assert
+      expect(recoverRoute).toBeDefined()
+      expect(recoverRoute?.path).toBe('/recuperar-senha')
+      expect(recoverRoute?.meta?.public).toBe(true)
+
+      expect(updateRoute).toBeDefined()
+      expect(updateRoute?.path).toBe('/atualizar-senha')
+      expect(updateRoute?.meta?.public).toBe(true)
+    })
+  })
+
+  describe('router navegação - recuperação de senha', () => {
+    let authStoreMock: any
+
+    beforeEach(async () => {
+      setActivePinia(createPinia())
+      vi.clearAllMocks()
+
+      authStoreMock = {
+        isAuthenticated: false,
+        isInitialized: true,
+        hasError: false,
+        initializeAuth: vi.fn(),
+        clearError: vi.fn(),
+      }
+      vi.mocked(useAuthStore).mockReturnValue(authStoreMock)
+
+      // Reset router para evitar estado residual de outros testes
+      await router.push('/')
+    })
+
+    it('deve permitir acesso à rota de recuperar senha estando deslogado', async () => {
+      // Arrange
+      authStoreMock.isAuthenticated = false
+
+      // Act
+      await router.push('/recuperar-senha')
+
+      // Assert
+      expect(router.currentRoute.value.name).toBe('recover-password')
+    })
+
+    it('deve redirecionar para dashboard se logado tentar acessar recuperar senha', async () => {
+      // Arrange
+      authStoreMock.isAuthenticated = true
+
+      // Act
+      await router.push('/recuperar-senha')
+
+      // Assert
+      expect(router.currentRoute.value.name).toBe('dashboard')
+    })
+
+    it('deve permitir acesso à rota de atualizar senha estando deslogado (pública)', async () => {
+      // Arrange
+      authStoreMock.isAuthenticated = false
+
+      // Act
+      await router.push('/atualizar-senha')
+
+      // Assert
+      expect(router.currentRoute.value.name).toBe('update-password')
+    })
+
+    it('deve permitir acesso à rota de atualizar senha estando logado', async () => {
+      // Arrange
+      authStoreMock.isAuthenticated = true
+
+      // Act
+      await router.push('/atualizar-senha')
+
+      // Assert
+      expect(router.currentRoute.value.name).toBe('update-password')
     })
   })
 })

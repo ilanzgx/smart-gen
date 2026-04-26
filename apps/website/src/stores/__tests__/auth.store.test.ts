@@ -9,6 +9,8 @@ vi.mock('@smart-gen/supabase', () => ({
   signOut: vi.fn(),
   getSession: vi.fn(),
   getUser: vi.fn(),
+  resetPasswordForEmail: vi.fn(),
+  updatePassword: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -222,6 +224,102 @@ describe('Auth Store - Testes Unitários', () => {
       expect(store.userEmail).toBe('')
       store.user = { email: 'test@test.com' } as any
       expect(store.userEmail).toBe('test@test.com')
+    })
+  })
+
+  describe('recoverPassword', () => {
+    it('deve solicitar redefinição de senha com sucesso', async () => {
+      // Arrange
+      const store = useAuthStore()
+      vi.mocked(supabasePkg.resetPasswordForEmail).mockResolvedValue(undefined as any)
+
+      // Act
+      await store.recoverPassword('test@test.com', 'https://example.com/atualizar-senha')
+
+      // Assert
+      expect(supabasePkg.resetPasswordForEmail).toHaveBeenCalled()
+      expect(store.loading).toBe(false)
+      expect(store.error).toBeNull()
+    })
+
+    it('deve capturar erro se a solicitação de redefinição falhar', async () => {
+      // Arrange
+      const store = useAuthStore()
+      const supabaseMessage = 'Email rate limit exceeded'
+      const expectedMessage = 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.'
+      vi.mocked(supabasePkg.resetPasswordForEmail).mockRejectedValue(new Error(supabaseMessage))
+
+      // Act & Assert
+      await expect(
+        store.recoverPassword('test@test.com', 'https://example.com/atualizar-senha'),
+      ).rejects.toThrow(supabaseMessage)
+
+      // Assert
+      expect(store.error).toBe(expectedMessage)
+      expect(store.loading).toBe(false)
+      expect(store.hasError).toBe(true)
+    })
+
+    it('deve usar fallback genérico para erros não mapeados', async () => {
+      // Arrange
+      const store = useAuthStore()
+      vi.mocked(supabasePkg.resetPasswordForEmail).mockRejectedValue(
+        new Error('Unknown error xyz'),
+      )
+
+      // Act & Assert
+      await expect(
+        store.recoverPassword('test@test.com', 'https://example.com/atualizar-senha'),
+      ).rejects.toThrow('Unknown error xyz')
+
+      // Assert
+      expect(store.error).toBe('Erro ao solicitar redefinição de senha')
+    })
+  })
+
+  describe('updatePassword', () => {
+    it('deve atualizar a senha com sucesso', async () => {
+      // Arrange
+      const store = useAuthStore()
+      vi.mocked(supabasePkg.updatePassword).mockResolvedValue(undefined as any)
+
+      // Act
+      await store.updatePassword('nova-senha-123')
+
+      // Assert
+      expect(supabasePkg.updatePassword).toHaveBeenCalled()
+      expect(store.loading).toBe(false)
+      expect(store.error).toBeNull()
+    })
+
+    it('deve capturar erro se a atualização de senha falhar', async () => {
+      // Arrange
+      const store = useAuthStore()
+      const supabaseMessage = 'Password should be at least 6 characters.'
+      const expectedMessage = 'A senha deve ter no mínimo 6 caracteres.'
+      vi.mocked(supabasePkg.updatePassword).mockRejectedValue(new Error(supabaseMessage))
+
+      // Act & Assert
+      await expect(store.updatePassword('123')).rejects.toThrow(supabaseMessage)
+
+      // Assert
+      expect(store.error).toBe(expectedMessage)
+      expect(store.loading).toBe(false)
+      expect(store.hasError).toBe(true)
+    })
+
+    it('deve usar fallback genérico para erros não mapeados', async () => {
+      // Arrange
+      const store = useAuthStore()
+      vi.mocked(supabasePkg.updatePassword).mockRejectedValue(
+        new Error('Something went wrong'),
+      )
+
+      // Act & Assert
+      await expect(store.updatePassword('nova-senha')).rejects.toThrow('Something went wrong')
+
+      // Assert
+      expect(store.error).toBe('Erro ao atualizar senha')
     })
   })
 })
