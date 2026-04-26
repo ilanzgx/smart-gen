@@ -1,0 +1,22 @@
+#!/bin/sh
+
+echo "🚀 Executando verificações pré-push..."
+echo ""
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+echo "📡 [1/2] Buscando atualizações de origin/$branch..."
+git fetch origin
+
+echo ""
+echo "🔄 [2/2] Verificando sincronização com origin/$branch..."
+
+if ! git merge-base --is-ancestor origin/$branch HEAD; then
+  echo ""
+  echo "❌ Sua branch está desatualizada com origin/$branch"
+  echo "👉 Rode: pnpm run sync"
+  exit 1
+fi
+
+echo ""
+echo "✅ Branch sincronizada! Push autorizado."
