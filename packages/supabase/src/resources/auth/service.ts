@@ -94,3 +94,43 @@ export const getUser = async (
   }
   return data.user;
 };
+
+/**
+ * Envia email de redefinição de senha para o usuário.
+ * @param {SupabaseClient} supabase - Instância de SupabaseClient.
+ * @param {string} email - Email do usuário.
+ * @param {string} redirectTo - URL para redirecionar após o usuário clicar no link.
+ * @returns {Promise<void>}
+ */
+export const resetPasswordForEmail = async (
+  supabase: SupabaseClient,
+  email: string,
+  redirectTo: string,
+): Promise<void> => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+
+  if (error) {
+    throw error;
+  }
+};
+
+/**
+ * Atualiza a senha do usuário autenticado.
+ * @param {SupabaseClient} supabase - Instância de SupabaseClient.
+ * @param {string} password - Nova senha.
+ * @returns {Promise<void>}
+ */
+export const updatePassword = async (
+  supabase: SupabaseClient,
+  password: string,
+): Promise<void> => {
+  const { error } = await supabase.auth.updateUser({
+    password,
+  });
+
+  if (error) {
+    throw error;
+  }
+};

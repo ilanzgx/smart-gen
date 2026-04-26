@@ -3,6 +3,8 @@ import {
   signIn as signInFn,
   signUp as signUpFn,
   signOut as signOutFn,
+  resetPasswordForEmail,
+  updatePassword as updatePasswordFn,
   getSession,
   type User,
   type SignInCredentials,
@@ -125,6 +127,51 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * Envia email de redefinição de senha para o usuário
+   * @param {string} email - Email do usuário
+   * @param {string} redirectTo - URL para redirecionar após clique no email
+   * @returns {Promise<void>}
+   */
+  async function recoverPassword(email: string, redirectTo: string): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      await resetPasswordForEmail(supabase, email, redirectTo)
+    } catch (err) {
+      error.value = translateAuthError(
+        err instanceof Error ? err.message : undefined,
+        'Erro ao solicitar redefinição de senha',
+      )
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Atualiza a senha do usuário
+   * @param {string} password - Nova senha
+   * @returns {Promise<void>}
+   */
+  async function updatePassword(password: string): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      await updatePasswordFn(supabase, password)
+    } catch (err) {
+      error.value = translateAuthError(
+        err instanceof Error ? err.message : undefined,
+        'Erro ao atualizar senha',
+      )
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
    * Limpa o estado de erro atual
    */
   function clearError() {
@@ -143,6 +190,8 @@ export const useAuthStore = defineStore('auth', () => {
     signUp,
     signOut,
     initializeAuth,
+    recoverPassword,
+    updatePassword,
     clearError,
   }
 })

@@ -7,8 +7,12 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "test:unit": "vitest run"
+  },
   "devDependencies": {
-    "@smart-gen/tsconfig": "workspace:*"
+    "@smart-gen/tsconfig": "workspace:*",
+    "vitest": "^4.1.2"
   },
   "dependencies": {
     "zod": "^4.3.6"

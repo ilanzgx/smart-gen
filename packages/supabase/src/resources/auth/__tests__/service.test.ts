@@ -1,7 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../../database.types";
-import { signIn, signUp, signOut, getSession, getUser } from "../service";
+import {
+  signIn,
+  signUp,
+  signOut,
+  getSession,
+  getUser,
+  resetPasswordForEmail,
+  updatePassword,
+} from "../service";
 
 describe("auth.service testes unitários", () => {
   const mockSignIn = vi.fn();
@@ -9,6 +17,8 @@ describe("auth.service testes unitários", () => {
   const mockSignOut = vi.fn();
   const mockGetSession = vi.fn();
   const mockGetUser = vi.fn();
+  const mockResetPasswordForEmail = vi.fn();
+  const mockUpdateUser = vi.fn();
 
   const mockSupabase = {
     auth: {
@@ -17,6 +27,8 @@ describe("auth.service testes unitários", () => {
       signOut: mockSignOut,
       getSession: mockGetSession,
       getUser: mockGetUser,
+      resetPasswordForEmail: mockResetPasswordForEmail,
+      updateUser: mockUpdateUser,
     },
   } as unknown as SupabaseClient;
 
@@ -211,5 +223,62 @@ describe("auth.service testes unitários", () => {
 
     // Act & Assert
     await expect(getUser(mockSupabase)).rejects.toEqual(mockError);
+  });
+
+  it("deve enviar email de redefinição de senha com os parâmetros corretos", async () => {
+    // Arrange
+    mockResetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+
+    // Act
+    await resetPasswordForEmail(
+      mockSupabase,
+      "test@gmail.com",
+      "https://example.com/atualizar-senha",
+    );
+
+    // Assert
+    expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+      "test@gmail.com",
+      { redirectTo: "https://example.com/atualizar-senha" },
+    );
+  });
+
+  it("deve lançar um erro se o envio de redefinição de senha falhar", async () => {
+    // Arrange
+    const mockError = { message: "Email rate limit exceeded" };
+    mockResetPasswordForEmail.mockResolvedValue({ data: null, error: mockError });
+
+    // Act & Assert
+    await expect(
+      resetPasswordForEmail(
+        mockSupabase,
+        "test@gmail.com",
+        "https://example.com/atualizar-senha",
+      ),
+    ).rejects.toEqual(mockError);
+  });
+
+  it("deve atualizar a senha do usuário com sucesso", async () => {
+    // Arrange
+    mockUpdateUser.mockResolvedValue({ data: { user: {} }, error: null });
+
+    // Act
+    await updatePassword(mockSupabase, "nova-senha-123");
+
+    // Assert
+    expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+      password: "nova-senha-123",
+    });
+  });
+
+  it("deve lançar um erro se a atualização de senha falhar", async () => {
+    // Arrange
+    const mockError = { message: "Erro ao atualizar senha" };
+    mockUpdateUser.mockResolvedValue({ data: null, error: mockError });
+
+    // Act & Assert
+    await expect(updatePassword(mockSupabase, "nova-senha-123")).rejects.toEqual(
+      mockError,
+    );
   });
 });

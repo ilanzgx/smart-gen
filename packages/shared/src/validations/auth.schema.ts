@@ -26,3 +26,20 @@ export const registerSchema = z
 
 export type RegisterDTO = z.infer<typeof registerSchema>;
 
+export const recoverPasswordSchema = z.object({
+  email: emailField,
+});
+
+export type RecoverPasswordDTO = z.infer<typeof recoverPasswordSchema>;
+
+export const updatePasswordSchema = z
+  .object({
+    password: z.string({ message: "A senha é obrigatória" }).min(6, "A senha deve ter no mínimo 6 caracteres"),
+    confirmPassword: z.string({ message: "Você deve confirmar a senha" }).min(1, "Confirme sua senha"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
+  });
+
+export type UpdatePasswordDTO = z.infer<typeof updatePasswordSchema>;
