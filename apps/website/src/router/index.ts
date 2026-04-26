@@ -6,14 +6,19 @@ import LoginView from '@/views/LoginView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import RegisterView from '@/views/RegisterView.vue'
+import RecoverPasswordView from '@/views/RecoverPasswordView.vue'
+import UpdatePasswordView from '@/views/UpdatePasswordView.vue'
 import { useAuthStore } from '@/stores/auth.store'
 
 /*
  * Todas as rotas listadas abaixo:
  *
  * / - Home (pública)
+ * /sobre - About (pública)
  * /login - Login (pública)
  * /register - Register (pública)
+ * /recover-password - Recover Password (pública)
+ * /update-password - Update Password (pública)
  * /dashboard - Dashboard (privada)
  * /profile - Profile (privada)
  * /:pathMatch(.*)* - 404 Not Found (pública)
@@ -43,6 +48,24 @@ const router = createRouter({
       name: 'register',
       component: RegisterView,
       alias: ['/cadastro', '/signup', '/register'],
+      meta: {
+        public: true,
+      },
+    },
+    {
+      path: '/recuperar-senha',
+      name: 'recover-password',
+      component: RecoverPasswordView,
+      alias: ['/recover-password', '/forgot-password', '/esqueci-minha-senha'],
+      meta: {
+        public: true,
+      },
+    },
+    {
+      path: '/atualizar-senha',
+      name: 'update-password',
+      component: UpdatePasswordView,
+      alias: ['/update-password', '/reset-password', '/nova-senha', '/new-password'],
       meta: {
         public: true,
       },
@@ -102,11 +125,11 @@ router.beforeEach((to) => {
     return { name: 'login' }
   }
 
-  // Se o usuário estiver autenticado e tentar acessar a página de login ou registro,
+  // Se o usuário estiver autenticado e tentar acessar a página de login, registro ou recuperar senha,
   // redireciona para o dashboard
   if (
     authStore.isAuthenticated &&
-    (to.name === 'login' || to.name === 'register' || to.name === 'home')
+    (to.name === 'login' || to.name === 'register' || to.name === 'home' || to.name === 'recover-password')
   ) {
     return { name: 'dashboard' }
   }
