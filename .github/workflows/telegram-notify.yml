@@ -11,8 +11,12 @@ on:
   pull_request_review_comment:
     types: [created]
   workflow_run:
-    workflows: [CI, Deploy Website]
+    workflows: ["CI", "Deploy Website", "Build Mobile (APK)"]
     types: [completed]
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   notify:

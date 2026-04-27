@@ -14,30 +14,30 @@ jobs:
   ci:
     name: Lint, Type Check, Test & Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm -r --if-present run lint
-
-      - name: Type Check
-        run: pnpm -r --if-present run type-check
-
-      - name: Test
-        run: pnpm -r --if-present run test:unit
-
-      - name: Build
-        run: pnpm -r --if-present run build
+      - name: Run CI Suite
+        run: |
+          pnpm -r --if-present run lint
+          pnpm -r --if-present run type-check
+          pnpm -r --if-present run test:unit
+          pnpm -r --if-present run build

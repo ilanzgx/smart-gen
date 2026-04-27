@@ -8,6 +8,14 @@ on:
     branches:
       - main
 
+concurrency:
+  group: build-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   build-android:
     name: Build Android APK
@@ -21,7 +29,7 @@ jobs:
       - name: Setup PNPM
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
