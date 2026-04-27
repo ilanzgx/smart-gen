@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { supabase } from '@/lib/supabase'
-import { getLastReadingByGeneratorId } from '@smart-gen/supabase'
+import { getLastReadingByGeneratorId, getGenerators, type Generator } from '@smart-gen/supabase'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 import WaterLevelChart from '@/components/generators/WaterLevelChart.vue'
 import WaterGauge from '@/components/WaterGauge.vue'
 import ThermometerGauge from '@/components/ThermometerGauge.vue'
 import DashboardLayout from '@/components/layouts/DashboardLayout.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui'
 import { Activity, Droplets, ThermometerSun } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -16,18 +17,30 @@ const { user } = storeToRefs(authStore)
 
 const name = computed(() => user.value?.user_metadata?.name)
 
-/*
- * Geradores de exemplo:
- * 11111111-1111-1111-1111-111111111111 e 22222222-2222-2222-2222-222222222222
- */
-const defaultGeneratorId = ref('11111111-1111-1111-1111-111111111111')
+const generators = ref<Generator[]>([])
+const selectedGeneratorId = ref<string>('')
+const selectedGenerator = computed(
+  () => generators.value.find((g) => g.id === selectedGeneratorId.value) || null,
+)
+
 const lastWaterLevel = ref(0)
 const lastTemperature = ref(0)
 const lastTimestamp = ref<string | null>(null)
 const isOperating = ref(false)
 
-onMounted(async () => {
-  const lastReading = await getLastReadingByGeneratorId(supabase, defaultGeneratorId.value)
+const getAllGenerators = async () => {
+  const response: Generator[] = await getGenerators(supabase)
+
+  if (response.length > 0) {
+    generators.value = response
+    selectedGeneratorId.value = response[0]!.id
+  }
+}
+
+const fetchDashboardData = async () => {
+  if (!selectedGeneratorId.value) return
+
+  const lastReading = await getLastReadingByGeneratorId(supabase, selectedGeneratorId.value)
   lastWaterLevel.value = lastReading?.nivel_agua ?? 0
   lastTemperature.value = lastReading?.temperatura ?? 0
   lastTimestamp.value = lastReading?.timestamp ?? null
@@ -43,7 +56,18 @@ onMounted(async () => {
     const oneHourInMilliseconds = 60 * 60 * 1000
 
     isOperating.value = now - readingTime <= oneHourInMilliseconds
+  } else {
+    isOperating.value = false
   }
+}
+
+watch(selectedGeneratorId, async () => {
+  await fetchDashboardData()
+})
+
+onMounted(async () => {
+  await getAllGenerators()
+  await fetchDashboardData()
 })
 
 const formattedLastSync = computed(() => {
@@ -69,14 +93,21 @@ const formattedLastSync = computed(() => {
         >
           👋 Olá, {{ name }}
         </h1>
-        <p class="text-sm text-slate-500 font-medium flex items-center gap-2">
-          Gerenciando unidade
-          <span
-            class="font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border text-xs"
-          >
-            {{ defaultGeneratorId }}
-          </span>
-        </p>
+        <div
+          class="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-500 font-medium"
+        >
+          <span>Gerenciando unidade</span>
+          <Select v-model="selectedGeneratorId">
+            <SelectTrigger class="w-full sm:w-auto sm:min-w-70">
+              <SelectValue placeholder="Selecione uma unidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="generator in generators" :key="generator.id" :value="generator.id">
+                {{ generator.id }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </header>
 
       <!-- Grid de indicadores -->
@@ -182,14 +213,22 @@ const formattedLastSync = computed(() => {
           >
             Histórico de temperatura
           </h3>
-          <TemperatureChart :generator-id="defaultGeneratorId" />
+          <TemperatureChart
+            v-if="selectedGenerator"
+            :key="selectedGenerator.id"
+            :generator-id="selectedGenerator.id"
+          />
         </div>
         <!-- Card de gráfico de nível de água -->
         <div class="bg-white dark:bg-slate-900 border rounded-2xl shadow-sm p-6 overflow-hidden">
           <h3 class="font-semibold text-lg text-slate-800 dark:text-slate-100 mb-6">
             Histórico de nível de água
           </h3>
-          <WaterLevelChart :generator-id="defaultGeneratorId" />
+          <WaterLevelChart
+            v-if="selectedGenerator"
+            :key="selectedGenerator.id"
+            :generator-id="selectedGenerator.id"
+          />
         </div>
       </div>
     </div>
