@@ -1,13 +1,17 @@
 #include "smartgen_wifi.h"
 #include "smartgen_credentials.h"
 #include "smartgen_supabase.h"
-
-SmartGenWifi smartGenWifi;
-SmartGenSupabase smartGenSupabase(supabaseUrl, supabaseKey);
+#include "smartgen_sensors.h"
 
 #define BAUD                 (115200)
 #define SECONDS(s)           ((s) * 1000UL)
 #define MINUTES(m)           ((m) * 60000UL)
+
+#define ONE_WIRE_BUS         (5)
+
+SmartGenWifi smartGenWifi;
+SmartGenSupabase smartGenSupabase(supabaseUrl, supabaseKey);
+SmartGenSensors smartGenSensors(ONE_WIRE_BUS);
 
 unsigned long lastTime = 0;
 const unsigned long timerDelay = MINUTES(10);
@@ -15,6 +19,7 @@ const unsigned long timerDelay = MINUTES(10);
 void setup() {
   Serial.begin(BAUD);
   smartGenWifi.connect();
+  smartGenSensors.init();
 }
 
 void loop() {
@@ -27,9 +32,8 @@ void loop() {
       return;
     }
 
-    // mock sensors values
-    float temperature = 18.5;
-    float water = 37.2;
+    float temperature = smartGenSensors.getTemperature();
+    float water = 37.2; // mock
 
     int statusCode = smartGenSupabase.sendReading("22222222-2222-2222-2222-222222222222", temperature, water);
     Serial.printf("\nDados enviados! Status code: %d", statusCode);
