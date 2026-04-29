@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { type ApexOptions, type ApexAxisChartSeries } from 'apexcharts'
 import VueApexCharts from 'vue3-apexcharts'
-import { onMounted, ref } from 'vue'
-import { getReadingsByGeneratorId } from '@smart-gen/supabase'
+import { onMounted, ref, computed } from 'vue'
+import { getReadingsByGeneratorId, type Leitura } from '@smart-gen/supabase'
 import { supabase } from '@/lib/supabase'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -10,12 +10,34 @@ const props = defineProps<{
   generatorId: string
 }>()
 const loading = ref(true)
-const isEmpty = ref(false)
 
-const series = ref<ApexAxisChartSeries>([
+const timeFilter = ref(30)
+const allReadings = ref<Leitura[]>([])
+
+const filterOptions = [
+  { label: '24h', value: 1 },
+  { label: '7d', value: 7 },
+  { label: '30d', value: 30 },
+  { label: '1a', value: 365 },
+]
+
+const filteredReadings = computed(() => {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - timeFilter.value)
+  return allReadings.value.filter(
+    (r: Leitura) => new Date(r.timestamp!).getTime() >= cutoff.getTime(),
+  )
+})
+
+const isEmpty = computed(() => filteredReadings.value.length === 0)
+
+const series = computed<ApexAxisChartSeries>(() => [
   {
     name: 'Nível de água',
-    data: [] as { x: number; y: number }[],
+    data: filteredReadings.value.map((r) => ({
+      x: new Date(r.timestamp!).getTime(),
+      y: r.nivel_agua || 0,
+    })),
   },
 ])
 
@@ -68,29 +90,11 @@ onMounted(async () => {
   try {
     const readings = await getReadingsByGeneratorId(supabase, props.generatorId)
 
-    if (!readings.length) {
-      isEmpty.value = true
-      return
-    }
-
-    const sortedReadings = [...readings].sort(
-      (a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime(),
-    )
-
-    series.value = [
-      {
-        name: 'Nível de água',
-        data: sortedReadings
-          .filter((r) => r.timestamp != null)
-          .map((r) => ({
-            x: new Date(r.timestamp!).getTime(),
-            y: r.nivel_agua || 0,
-          })),
-      },
-    ]
+    allReadings.value = [...readings]
+      .filter((r) => r.timestamp != null)
+      .sort((a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime())
   } catch (error) {
     console.error('Erro ao buscar leituras de água:', error)
-    isEmpty.value = true
   } finally {
     loading.value = false
   }
@@ -98,13 +102,31 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="w-full relative min-h-75">
-    <Skeleton v-if="loading" class="w-full h-75 rounded-lg" />
-
-    <div v-else-if="isEmpty" class="flex items-center justify-center h-75 text-slate-400 text-sm">
-      Sem dados de nível de água para exibir.
+  <div class="w-full flex flex-col gap-4">
+    <div class="flex flex-wrap sm:flex-nowrap justify-start sm:justify-end gap-2 w-full">
+      <button
+        v-for="opt in filterOptions"
+        :key="opt.value"
+        @click="timeFilter = opt.value"
+        class="flex-1 sm:flex-none min-h-11 px-3 py-2 text-sm sm:text-xs font-medium rounded-md transition-colors cursor-pointer"
+        :class="
+          timeFilter === opt.value
+            ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+        "
+      >
+        {{ opt.label }}
+      </button>
     </div>
 
-    <VueApexCharts v-else width="100%" height="300" :options="chartOptions" :series="series" />
+    <div class="w-full relative min-h-75">
+      <Skeleton v-if="loading" class="w-full h-75 rounded-lg" />
+
+      <div v-else-if="isEmpty" class="flex items-center justify-center h-75 text-slate-400 text-sm">
+        Sem dados de nível de água para exibir.
+      </div>
+
+      <VueApexCharts v-else width="100%" height="300" :options="chartOptions" :series="series" />
+    </div>
   </div>
 </template>
