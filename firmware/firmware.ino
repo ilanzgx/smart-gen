@@ -3,6 +3,8 @@
 #include "smartgen_supabase.h"
 #include "smartgen_sensors.h"
 
+#include <WiFi.h>
+
 #define BAUD                 (115200)
 #define SECONDS(s)           ((s) * 1000UL)
 #define MINUTES(m)           ((m) * 60000UL)
@@ -40,13 +42,18 @@ void loop() {
 
     float water = 37.2; // mock
 
-    int statusCode = smartGenSupabase.sendReading("22222222-2222-2222-2222-222222222222", temperature, water);
+    int statusCode = smartGenSupabase.sendReading(WiFi.macAddress().c_str(), temperature, water);
     switch(statusCode) {
+      case 200:
       case 201:
+      case 204:
         Serial.println("Leitura enviada com sucesso!");
         break;
+      case 404:
+        Serial.println("Falha! Placa não cadastrada ou URL errada (404).");
+        break;
       case 500:
-        Serial.println("Falha ao enviar leitura! Erro no servidor!");
+        Serial.println("Falha ao enviar leitura! Erro interno do servidor (500)!");
         break;
       case -1:
         Serial.println("Falha ao enviar leitura! Erro na conexão WiFi!");

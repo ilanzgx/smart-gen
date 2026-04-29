@@ -14,9 +14,9 @@ int SmartGenSupabase::sendReading(const char* id, float temperature, float water
   http.addHeader("Authorization", String("Bearer ") + _key);
 
   String payload = "{";
-  payload += "\"gerador_id\":\"" + String(id) + "\",";
-  payload += "\"temperatura\":" + String(temperature) + ",";
-  payload += "\"nivel_agua\":" + String(water);
+  payload += "\"p_mac_address\":\"" + String(id) + "\",";
+  payload += "\"p_temperatura\":" + String(temperature) + ",";
+  payload += "\"p_nivel_agua\":" + String(water);
   payload += "}";
 
   int httpCode = http.POST(payload);
@@ -24,7 +24,7 @@ int SmartGenSupabase::sendReading(const char* id, float temperature, float water
   if(httpCode <= 0) {
     Serial.printf("Erro POST: %s\n", http.errorToString(httpCode).c_str());
   }
-  
+
   http.end();
   return httpCode;
 }
