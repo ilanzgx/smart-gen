@@ -73,13 +73,19 @@ onMounted(async () => {
       return
     }
 
+    const sortedReadings = [...readings].sort(
+      (a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime(),
+    )
+
     series.value = [
       {
         name: 'Temperatura',
-        data: readings.map((r) => ({
-          x: new Date(r.timestamp!).getTime(),
-          y: r.temperatura || 0,
-        })),
+        data: sortedReadings
+          .filter((r) => r.timestamp != null)
+          .map((r) => ({
+            x: new Date(r.timestamp!).getTime(),
+            y: r.temperatura || 0,
+          })),
       },
     ]
   } catch (error) {

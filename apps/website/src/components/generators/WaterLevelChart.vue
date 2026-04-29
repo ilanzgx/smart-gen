@@ -73,13 +73,19 @@ onMounted(async () => {
       return
     }
 
+    const sortedReadings = [...readings].sort(
+      (a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime(),
+    )
+
     series.value = [
       {
         name: 'Nível de água',
-        data: readings.map((r) => ({
-          x: new Date(r.timestamp!).getTime(),
-          y: r.nivel_agua || 0,
-        })),
+        data: sortedReadings
+          .filter((r) => r.timestamp != null)
+          .map((r) => ({
+            x: new Date(r.timestamp!).getTime(),
+            y: r.nivel_agua || 0,
+          })),
       },
     ]
   } catch (error) {
@@ -95,19 +101,10 @@ onMounted(async () => {
   <div class="w-full relative min-h-75">
     <Skeleton v-if="loading" class="w-full h-75 rounded-lg" />
 
-    <div
-      v-else-if="isEmpty"
-      class="flex items-center justify-center h-75 text-slate-400 text-sm"
-    >
+    <div v-else-if="isEmpty" class="flex items-center justify-center h-75 text-slate-400 text-sm">
       Sem dados de nível de água para exibir.
     </div>
 
-    <VueApexCharts
-      v-else
-      width="100%"
-      height="300"
-      :options="chartOptions"
-      :series="series"
-    />
+    <VueApexCharts v-else width="100%" height="300" :options="chartOptions" :series="series" />
   </div>
 </template>
