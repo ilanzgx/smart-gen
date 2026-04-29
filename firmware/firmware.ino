@@ -33,9 +33,27 @@ void loop() {
     }
 
     float temperature = smartGenSensors.getTemperature();
+    if (temperature <= -120.0) {
+      Serial.println("Leitura de temperatura inválida, ignorando...");
+      return;
+    }
+
     float water = 37.2; // mock
 
     int statusCode = smartGenSupabase.sendReading("22222222-2222-2222-2222-222222222222", temperature, water);
-    Serial.printf("\nDados enviados! Status code: %d", statusCode);
+    switch(statusCode) {
+      case 201:
+        Serial.println("Leitura enviada com sucesso!");
+        break;
+      case 500:
+        Serial.println("Falha ao enviar leitura! Erro no servidor!");
+        break;
+      case -1:
+        Serial.println("Falha ao enviar leitura! Erro na conexão WiFi!");
+        break;
+      default:
+        Serial.printf("Falha ao enviar leitura! Status code: %d\n", statusCode);
+        break;
+    }
   }
 }
