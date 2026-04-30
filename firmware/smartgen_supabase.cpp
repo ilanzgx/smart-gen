@@ -1,10 +1,24 @@
 #include "smartgen_supabase.h"
 #include <HTTPClient.h>
 
+/**
+ * @brief Construtor da classe SmartGenSupabase.
+ *
+ * @param url - A URL do Supabase.
+ * @param key - A chave do Supabase.
+ */
 SmartGenSupabase::SmartGenSupabase(const char* url, const char* key) : _url(url), _key(key) {}
 
 void SmartGenSupabase::init() {}
 
+/**
+ * @brief Envia uma leitura para o Supabase.
+ *
+ * @param id - O endereço MAC da placa.
+ * @param temperature - A temperatura atual.
+ * @param water - O nível da água.
+ * @return int - O código HTTP da resposta.
+ */
 int SmartGenSupabase::sendReading(const char* id, float temperature, float water) {
   HTTPClient http;
 
@@ -22,7 +36,7 @@ int SmartGenSupabase::sendReading(const char* id, float temperature, float water
   int httpCode = http.POST(payload);
 
   if(httpCode <= 0) {
-    Serial.printf("Erro POST: %s\n", http.errorToString(httpCode).c_str());
+    Serial.printf("HTTP POST error: %s\n", http.errorToString(httpCode).c_str());
   }
 
   http.end();

@@ -1,5 +1,5 @@
-#include "smartgen_wifi.h"
 #include "smartgen_credentials.h"
+#include "smartgen_wifi.h"
 #include "smartgen_supabase.h"
 #include "smartgen_sensors.h"
 
