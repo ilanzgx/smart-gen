@@ -29,8 +29,8 @@ void loop() {
     lastTime = millis();
 
     if(!smartGenWifi.isConnected()) {
-      Serial.println("Sem WiFi. Tentando reconectar...");
-      smartGenWifi.connect();
+      Serial.println("Sem WiFi. Acontecera uma tentativa de reconexao");
+      smartGenWifi.reconnect();
       return;
     }
 

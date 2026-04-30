@@ -20,3 +20,15 @@ void SmartGenWifi::connect() {
 bool SmartGenWifi::isConnected() {
   return WiFi.status() == WL_CONNECTED;
 }
+
+void SmartGenWifi::reconnect() {
+  Serial.println("Tentando reconectar Wifi...");
+  WiFi.reconnect();
+
+  delay(5000);
+
+  if(!isConnected()) {
+    Serial.println("Falha na reconexão do Wifi. Reiniciando placa...");
+    ESP.restart();
+  }
+}
