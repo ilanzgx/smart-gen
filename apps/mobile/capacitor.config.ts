@@ -10,6 +10,9 @@ const config: CapacitorConfig = {
       resize: KeyboardResize.Native,
       resizeOnFullScreen: true,
     },
+    CapacitorUpdater: {
+      autoUpdate: false,
+    },
   },
 };
 
