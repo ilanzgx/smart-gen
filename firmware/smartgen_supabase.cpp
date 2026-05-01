@@ -27,7 +27,12 @@ int SmartGenSupabase::sendReading(const char* id, float temperature, float water
   http.addHeader("apikey", _key);
   http.addHeader("Authorization", String("Bearer ") + _key);
 
-  String payload = "{";
+  String payload = "";
+
+  // Reserva espaço na memória previamente para evitar fragmentação/alocação dinâmica de memória
+  payload.reserve(128);
+
+  payload += "{";
   payload += "\"p_mac_address\":\"" + String(id) + "\",";
   payload += "\"p_temperatura\":" + String(temperature) + ",";
   payload += "\"p_nivel_agua\":" + String(water);
