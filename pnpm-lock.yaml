@@ -8,6 +8,12 @@ importers:
 
   .:
     devDependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.103.0
+        version: 2.103.0
+      adm-zip:
+        specifier: ^0.5.17
+        version: 0.5.17
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -26,6 +32,9 @@ importers:
       '@capacitor/keyboard':
         specifier: ^8.0.3
         version: 8.0.3(@capacitor/core@8.3.1)
+      '@capgo/capacitor-updater':
+        specifier: ^8.45.10
+        version: 8.45.10(@capacitor/core@8.3.1)
     devDependencies:
       '@capacitor/cli':
         specifier: ^8.3.1
@@ -33,6 +42,12 @@ importers:
 
   apps/website:
     dependencies:
+      '@capacitor/core':
+        specifier: ^8.3.1
+        version: 8.3.1
+      '@capgo/capacitor-updater':
+        specifier: ^8.45.10
+        version: 8.45.10(@capacitor/core@8.3.1)
       '@fontsource/nunito-sans':
         specifier: ^5.2.7
         version: 5.2.7
@@ -374,6 +389,11 @@ packages:
     resolution: {integrity: sha512-27Bv5/2w1Ss2njguBgTS98O0Bb8DRJhAARyzXYib0JlT/n6BrJw/EZ0CokM4C8GFUjFDjJnEKF1Ie01buTMEXQ==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-updater@8.45.10':
+    resolution: {integrity: sha512-C7BG65RRJuEms/48uZ5IIUWT1+Sewi8mfistuTAiWs4ZHyd7P5OUmeZPikztysfgWfMEZCNRJHjfRUcdwFBWrg==}
+    peerDependencies:
+      '@capacitor/core': ^8.0.0
 
   '@csstools/color-helpers@6.0.2':
     resolution: {integrity: sha512-LMGQLS9EuADloEFkcTBR3BwV/CGHV7zyDxVRtVDTwdI2Ca4it0CCVTT9wCkxSgokjE5Ho41hEPgb8OEUwoXr6Q==}
@@ -1266,6 +1286,10 @@ packages:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
+
+  adm-zip@0.5.17:
+    resolution: {integrity: sha512-+Ut8d9LLqwEvHHJl1+PIHqoyDxFgVN847JTVM3Izi3xHDWPE4UtzzXysMZQs64DMcrJfBeS/uoEP4AD3HQHnQQ==}
+    engines: {node: '>=12.0'}
 
   agent-base@9.0.0:
     resolution: {integrity: sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA==}
@@ -3078,6 +3102,10 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.3.1
 
+  '@capgo/capacitor-updater@8.45.10(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
   '@csstools/color-helpers@6.0.2': {}
 
   '@csstools/css-calc@3.1.1(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)':
@@ -3963,6 +3991,8 @@ snapshots:
       acorn: 8.16.0
 
   acorn@8.16.0: {}
+
+  adm-zip@0.5.17: {}
 
   agent-base@9.0.0: {}
 
