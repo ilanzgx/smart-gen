@@ -50,6 +50,7 @@ export class OtaUpdateService {
       await this.updater.notifyAppReady()
       console.log(OTA_TAG, 'Plugin initialized, notifyAppReady sent')
     } catch (error) {
+      this.updater = null
       console.warn(OTA_TAG, 'Not running on native, skipping:', error)
     }
   }
