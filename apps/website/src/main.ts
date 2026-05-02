@@ -20,8 +20,8 @@ app.mount('#app')
 // Só funciona em dispositivos mobile.
 if (typeof window !== 'undefined') {
   otaUpdateService.initialize().then(() => {
-    if (otaUpdateService.isNative()) {
-      otaUpdateService.checkForUpdate()
+    if (otaUpdateService.isNative) {
+      otaUpdateService.checkForUpdate().catch(() => {})
     }
   })
 }

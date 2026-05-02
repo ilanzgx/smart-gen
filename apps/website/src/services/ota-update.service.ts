@@ -9,86 +9,93 @@
  *   4. If same → do nothing
  */
 
+import type { CapacitorUpdaterPlugin } from '@capgo/capacitor-updater'
+
 interface OtaVersionResponse {
   version: string
   bundleUrl: string
   checksum: string
 }
 
-export class OtaUpdateService {
-  private updater: import('@capgo/capacitor-updater').CapacitorUpdaterPlugin | null = null
-  private isNativePlatform = false
+type OtaUpdater = CapacitorUpdaterPlugin
 
-  /**
-   * Dynamically import the plugin so it doesn't break web builds.
-   */
+const OTA_TAG = '[OTA]' as const
+const OTA_ENDPOINT = '/functions/v1/ota-version' as const
+
+function isOtaVersionResponse(data: unknown): data is OtaVersionResponse {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'version' in data &&
+    'bundleUrl' in data &&
+    typeof (data as OtaVersionResponse).version === 'string' &&
+    typeof (data as OtaVersionResponse).bundleUrl === 'string'
+  )
+}
+
+export class OtaUpdateService {
+  private updater: OtaUpdater | null = null
+
+  get isNative(): boolean {
+    return this.updater !== null
+  }
+
   async initialize(): Promise<void> {
     if (typeof window === 'undefined' || !('Capacitor' in window)) return
 
     try {
       const { CapacitorUpdater } = await import('@capgo/capacitor-updater')
       this.updater = CapacitorUpdater
-      this.isNativePlatform = true
 
-      // CRITICAL: Tell the plugin the current bundle loaded successfully.
-      // Without this, the plugin will roll back to the built-in version
-      // after a timeout (default 10s).
       await this.updater.notifyAppReady()
-      console.log('[OTA] Plugin initialized, notifyAppReady sent')
+      console.log(OTA_TAG, 'Plugin initialized, notifyAppReady sent')
     } catch (error) {
-      console.warn('[OTA] Not running on native, skipping:', error)
+      console.warn(OTA_TAG, 'Not running on native, skipping:', error)
     }
   }
 
-  isNative(): boolean {
-    return this.isNativePlatform
-  }
-
   async checkForUpdate(): Promise<void> {
-    if (!this.isNative() || !this.updater) return
+    if (!this.updater) return
 
     try {
       const versionInfo = await this.fetchLatestVersion()
-      if (!versionInfo) {
-        console.log('[OTA] No version info from server')
-        return
-      }
+      if (!versionInfo) return
 
-      // Check current bundle
       const current = await this.updater.current()
-      const currentVersion = current?.bundle?.version
+      const currentVersion = current?.bundle?.version ?? 'builtin'
 
       if (currentVersion === versionInfo.version) {
-        console.log(`[OTA] Already on latest: ${currentVersion}`)
+        console.log(OTA_TAG, `Already on latest: ${currentVersion}`)
         return
       }
 
-      console.log(
-        `[OTA] Update available: ${versionInfo.version} (current: ${currentVersion || 'builtin'})`,
-      )
+      console.log(OTA_TAG, `Update available: ${versionInfo.version} (current: ${currentVersion})`)
 
-      // Download the zip — the plugin handles extraction natively
       const bundle = await this.updater.download({
         url: versionInfo.bundleUrl,
         version: versionInfo.version,
       })
 
-      console.log(`[OTA] Downloaded bundle: ${bundle.version}`)
+      console.log(OTA_TAG, `Downloaded bundle: ${bundle.version}`)
 
-      // Apply the bundle — this reloads the app automatically
       await this.updater.set(bundle)
-      // Code after this line won't execute because the app reloads
+      // App reloads here — code below won't execute
     } catch (error) {
-      console.error('[OTA] Update check failed:', error)
+      console.error(OTA_TAG, 'Update check failed:', error)
     }
   }
 
   private async fetchLatestVersion(): Promise<OtaVersionResponse | null> {
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/ota-version`, {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn(OTA_TAG, 'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
+      return null
+    }
+
+    try {
+      const response = await fetch(`${supabaseUrl}${OTA_ENDPOINT}`, {
         headers: {
           Authorization: `Bearer ${supabaseAnonKey}`,
           apikey: supabaseAnonKey,
@@ -99,9 +106,16 @@ export class OtaUpdateService {
         throw new Error(`HTTP ${response.status}`)
       }
 
-      return await response.json()
+      const data: unknown = await response.json()
+
+      if (!isOtaVersionResponse(data)) {
+        console.warn(OTA_TAG, 'Invalid response shape:', data)
+        return null
+      }
+
+      return data
     } catch (error) {
-      console.error('[OTA] Failed to fetch version:', error)
+      console.error(OTA_TAG, 'Failed to fetch version:', error)
       return null
     }
   }
