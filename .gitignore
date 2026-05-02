@@ -11,3 +11,6 @@ node_modules
 
 # Ignore local environment variables files
 .env*.local
+
+# Ignore coverage reports
+coverage/

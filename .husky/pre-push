@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "🚀 Executando verificações pré-push..."
+echo "🔍 Executando verificações pré-push..."
 echo ""
 
 branch=$(git rev-parse --abbrev-ref HEAD)
