@@ -125,32 +125,34 @@ describe('OtaUpdateService testes unitários', () => {
   })
 
   describe('checkForUpdate', () => {
-    it('deve retornar silenciosamente se o updater não foi inicializado', async () => {
+    it('deve retornar null se o updater não foi inicializado', async () => {
       // Arrange
       const service = new OtaUpdateService()
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(mockFetch).not.toHaveBeenCalled()
     })
 
-    it('deve retornar silenciosamente se fetchLatestVersion retornar null', async () => {
+    it('deve retornar null se fetchLatestVersion retornar null', async () => {
       // Arrange
       const service = createServiceWithCapacitor()
       await service.initialize()
       mockFetchResponse({ error: 'not found' }, false, 404)
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(mockCurrent).not.toHaveBeenCalled()
       expect(mockDownload).not.toHaveBeenCalled()
     })
 
-    it('deve pular download se já estiver na versão mais recente', async () => {
+    it('deve retornar null se já estiver na versão mais recente', async () => {
       // Arrange
       const service = createServiceWithCapacitor()
       await service.initialize()
@@ -165,35 +167,40 @@ describe('OtaUpdateService testes unitários', () => {
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(mockDownload).not.toHaveBeenCalled()
       expect(logSpy).toHaveBeenCalledWith('[OTA]', 'Already on latest: abc123')
 
       logSpy.mockRestore()
     })
 
-    it('deve baixar e aplicar bundle quando há versão nova disponível', async () => {
+    it('deve baixar bundle e retornar resultado quando há versão nova', async () => {
       // Arrange
       const service = createServiceWithCapacitor()
       await service.initialize()
 
-      const newBundle = { version: 'v2.0', id: 'bundle-id' }
-      mockFetchResponse({ version: 'v2.0', bundleUrl: 'https://cdn/latest.zip', checksum: 'v2.0' })
+      const newBundle = { version: 'v2.0', id: 'bundle-id' } as any
+      mockFetchResponse({
+        version: 'v2.0',
+        bundleUrl: 'https://cdn/latest.zip',
+        checksum: 'v2.0',
+      })
       mockCurrent.mockResolvedValueOnce({ bundle: { version: 'v1.0' } })
       mockDownload.mockResolvedValueOnce(newBundle)
-      mockSet.mockResolvedValueOnce(undefined)
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toEqual({ bundle: newBundle, version: 'v2.0' })
       expect(mockDownload).toHaveBeenCalledWith({
         url: 'https://cdn/latest.zip',
         version: 'v2.0',
       })
-      expect(mockSet).toHaveBeenCalledWith(newBundle)
+      expect(mockSet).not.toHaveBeenCalled()
     })
 
     it('deve baixar quando versão atual é builtin (bundle nunca foi setado)', async () => {
@@ -201,40 +208,77 @@ describe('OtaUpdateService testes unitários', () => {
       const service = createServiceWithCapacitor()
       await service.initialize()
 
-      mockFetchResponse({ version: 'v1.0', bundleUrl: 'https://cdn/latest.zip', checksum: 'v1.0' })
+      mockFetchResponse({
+        version: 'v1.0',
+        bundleUrl: 'https://cdn/latest.zip',
+        checksum: 'v1.0',
+      })
       mockCurrent.mockResolvedValueOnce({ bundle: {} }) // sem version → cai no ?? 'builtin'
 
-      const newBundle = { version: 'v1.0' }
+      const newBundle = { version: 'v1.0' } as any
       mockDownload.mockResolvedValueOnce(newBundle)
-      mockSet.mockResolvedValueOnce(undefined)
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toEqual({ bundle: newBundle, version: 'v1.0' })
       expect(mockDownload).toHaveBeenCalled()
-      expect(mockSet).toHaveBeenCalledWith(newBundle)
+      expect(mockSet).not.toHaveBeenCalled()
     })
 
-    it('deve capturar erro e logar se download falhar', async () => {
+    it('deve retornar null e logar erro se download falhar', async () => {
       // Arrange
       const service = createServiceWithCapacitor()
       await service.initialize()
 
-      mockFetchResponse({ version: 'v2.0', bundleUrl: 'https://cdn/latest.zip', checksum: 'v2.0' })
+      mockFetchResponse({
+        version: 'v2.0',
+        bundleUrl: 'https://cdn/latest.zip',
+        checksum: 'v2.0',
+      })
       mockCurrent.mockResolvedValueOnce({ bundle: { version: 'v1.0' } })
       mockDownload.mockRejectedValueOnce(new Error('Network error'))
 
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(errorSpy).toHaveBeenCalledWith('[OTA]', 'Update check failed:', expect.any(Error))
       expect(mockSet).not.toHaveBeenCalled()
 
       errorSpy.mockRestore()
+    })
+  })
+
+  describe('applyUpdate', () => {
+    it('deve chamar set() no updater com o bundle fornecido', async () => {
+      // Arrange
+      const service = createServiceWithCapacitor()
+      await service.initialize()
+
+      const bundle = { version: 'v2.0', id: 'bundle-id' } as any
+      mockSet.mockResolvedValueOnce(undefined)
+
+      // Act
+      await service.applyUpdate(bundle)
+
+      // Assert
+      expect(mockSet).toHaveBeenCalledWith(bundle)
+    })
+
+    it('deve não fazer nada se o updater não foi inicializado', async () => {
+      // Arrange
+      const service = new OtaUpdateService()
+
+      // Act
+      await service.applyUpdate({ version: 'v2.0', id: 'x' } as any)
+
+      // Assert
+      expect(mockSet).not.toHaveBeenCalled()
     })
   })
 
@@ -248,9 +292,10 @@ describe('OtaUpdateService testes unitários', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(mockFetch).not.toHaveBeenCalled()
       expect(warnSpy).toHaveBeenCalledWith(
         '[OTA]',
@@ -289,9 +334,10 @@ describe('OtaUpdateService testes unitários', () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(mockCurrent).not.toHaveBeenCalled()
       expect(errorSpy).toHaveBeenCalledWith('[OTA]', 'Failed to fetch version:', expect.any(Error))
 
@@ -307,9 +353,10 @@ describe('OtaUpdateService testes unitários', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(mockCurrent).not.toHaveBeenCalled()
       expect(warnSpy).toHaveBeenCalledWith('[OTA]', 'Invalid response shape:', {
         error: 'something went wrong',
@@ -327,9 +374,10 @@ describe('OtaUpdateService testes unitários', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(mockCurrent).not.toHaveBeenCalled()
 
       warnSpy.mockRestore()
@@ -344,9 +392,10 @@ describe('OtaUpdateService testes unitários', () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       // Act
-      await service.checkForUpdate()
+      const result = await service.checkForUpdate()
 
       // Assert
+      expect(result).toBeNull()
       expect(errorSpy).toHaveBeenCalledWith('[OTA]', 'Failed to fetch version:', expect.any(Error))
 
       errorSpy.mockRestore()

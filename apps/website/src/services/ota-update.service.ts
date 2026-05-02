@@ -5,11 +5,12 @@
  * The flow:
  *   1. App boots → notifyAppReady() tells the plugin the bundle loaded OK
  *   2. Fetch our Edge Function to check if a new bundle exists (via eTag)
- *   3. If new → download() the zip, then set() to apply it (app reloads)
- *   4. If same → do nothing
+ *   3. If new → download() the zip and notify the store (user decides when to apply)
+ *   4. User clicks "Install" → set() to apply it (app reloads)
+ *   5. If same → do nothing
  */
 
-import type { CapacitorUpdaterPlugin } from '@capgo/capacitor-updater'
+import type { CapacitorUpdaterPlugin, BundleInfo } from '@capgo/capacitor-updater'
 
 interface OtaVersionResponse {
   version: string
@@ -55,19 +56,23 @@ export class OtaUpdateService {
     }
   }
 
-  async checkForUpdate(): Promise<void> {
-    if (!this.updater) return
+  /**
+   * Verifica se há atualização disponível e faz download do bundle.
+   * Retorna o bundle baixado e a versão, ou null se não houver atualização.
+   */
+  async checkForUpdate(): Promise<{ bundle: BundleInfo; version: string } | null> {
+    if (!this.updater) return null
 
     try {
       const versionInfo = await this.fetchLatestVersion()
-      if (!versionInfo) return
+      if (!versionInfo) return null
 
       const current = await this.updater.current()
       const currentVersion = current?.bundle?.version ?? 'builtin'
 
       if (currentVersion === versionInfo.version) {
         console.log(OTA_TAG, `Already on latest: ${currentVersion}`)
-        return
+        return null
       }
 
       console.log(OTA_TAG, `Update available: ${versionInfo.version} (current: ${currentVersion})`)
@@ -79,11 +84,22 @@ export class OtaUpdateService {
 
       console.log(OTA_TAG, `Downloaded bundle: ${bundle.version}`)
 
-      await this.updater.set(bundle)
-      // App reloads here — code below won't execute
+      return { bundle, version: versionInfo.version }
     } catch (error) {
       console.error(OTA_TAG, 'Update check failed:', error)
+      return null
     }
+  }
+
+  /**
+   * Aplica um bundle previamente baixado.
+   * Após a chamada, o app será recarregado automaticamente.
+   */
+  async applyUpdate(bundle: BundleInfo): Promise<void> {
+    if (!this.updater) return
+
+    console.log(OTA_TAG, `Applying bundle: ${bundle.version}`)
+    await this.updater.set(bundle)
   }
 
   private async fetchLatestVersion(): Promise<OtaVersionResponse | null> {
