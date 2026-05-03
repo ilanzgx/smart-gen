@@ -134,3 +134,57 @@ export const updatePassword = async (
     throw error;
   }
 };
+
+/**
+ * Atualiza os dados do usuário autenticado.
+ * Use para alterar dados como nome de exibição.
+ * @param {SupabaseClient} supabase - Instância de SupabaseClient.
+ * @param {Record<string, unknown>} metadata - Dados a serem atualizados no user_metadata.
+ * @returns {Promise<void>}
+ */
+export const updateProfile = async (
+  supabase: SupabaseClient,
+  metadata: Record<string, unknown>,
+): Promise<void> => {
+  const { error } = await supabase.auth.updateUser({
+    data: metadata,
+  });
+
+  if (error) {
+    throw error;
+  }
+};
+
+/**
+ * Atualiza o email do usuário autenticado.
+ * Atualiza tanto o auth.users (credencial de login) quanto a tabela public.usuario.
+ * @param {SupabaseClient} supabase - Instância de SupabaseClient.
+ * @param {string} newEmail - Novo email do usuário.
+ * @returns {Promise<void>}
+ */
+export const updateEmail = async (
+  supabase: SupabaseClient,
+  newEmail: string,
+): Promise<void> => {
+  const { data, error: authError } = await supabase.auth.updateUser({
+    email: newEmail,
+  });
+
+  if (authError) {
+    throw authError;
+  }
+
+  const userId = data.user?.id;
+  if (!userId) {
+    throw new Error("Não foi possível obter o ID do usuário após atualização.");
+  }
+
+  const { error: dbError } = await supabase
+    .from("usuario")
+    .update({ email: newEmail })
+    .eq("id", userId);
+
+  if (dbError) {
+    throw dbError;
+  }
+};
