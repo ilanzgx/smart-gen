@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import IconHouse from '@/components/icons/IconHouse.vue'
-import IconZap from '@/components/icons/IconZap.vue'
-import IconBell from '@/components/icons/IconBell.vue'
-import IconSettings from '@/components/icons/IconSettings.vue'
+import { ref } from 'vue'
+import { House, Zap, Bell, Settings } from 'lucide-vue-next'
 
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: IconHouse, marginBottom: 'mb-0' },
-  { to: '/geradores', label: 'Geradores', icon: IconZap, marginBottom: 'mb-6' },
-  { to: '/alertas', label: 'Alertas', icon: IconBell, marginBottom: 'mb-0' },
-]
-// OBS: Algumas dessas rotas são bem provaveis que se transformarão em modal
+import CreateGeneratorDialog from '@/components/dialogs/CreateGeneratorDialog.vue'
+import SettingsDialog from '@/components/dialogs/SettingsDialog.vue'
+
+// Dialogs
+const createGeneratorDialogOpen = ref(false)
+const settingsDialogOpen = ref(false)
 </script>
 
 <template>
@@ -26,29 +24,59 @@ const navItems = [
 
       <!-- Nav principal -->
       <nav class="flex-1 space-y-1">
+        <!-- Dashboard -->
         <RouterLink
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full"
+          to="/dashboard"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-0"
           active-class="bg-sky-100 !text-gray-900"
-          :class="item.marginBottom"
         >
-          <component :is="item.icon" class="w-5 h-5 shrink-0 text-gray-600" />
-          <span class="text-gray-900 font-semibold">{{ item.label }}</span>
+          <House class="w-5 h-5 shrink-0 text-gray-600" />
+          <span class="text-gray-900 font-semibold">Dashboard</span>
+        </RouterLink>
+
+        <!-- Geradores -->
+        <RouterLink
+          to="/geradores"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-0"
+          active-class="bg-sky-100 !text-gray-900"
+        >
+          <Zap class="w-5 h-5 shrink-0 text-gray-600" />
+          <span class="text-gray-900 font-semibold">Geradores</span>
+        </RouterLink>
+
+        <!-- Registrar Gerador -->
+        <button
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-6 cursor-pointer"
+          active-class="bg-sky-100 !text-gray-900"
+          @click="createGeneratorDialogOpen = true"
+        >
+          <Zap class="w-5 h-5 shrink-0 text-gray-600" />
+          <span class="text-gray-900 font-semibold">Registrar Gerador</span>
+        </button>
+        <CreateGeneratorDialog v-model:open="createGeneratorDialogOpen" />
+
+        <!-- Alertas -->
+        <RouterLink
+          to="/alertas"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-0"
+          active-class="bg-sky-100 !text-gray-900"
+        >
+          <Bell class="w-5 h-5 shrink-0 text-gray-600" />
+          <span class="text-gray-900 font-semibold">Alertas</span>
         </RouterLink>
       </nav>
 
       <!-- Configurações -->
       <div class="border-t pt-3">
-        <RouterLink
-          to="/configuracoes"
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full"
+        <button
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full cursor-pointer"
           active-class="bg-gray-100 !text-gray-900"
+          @click="settingsDialogOpen = true"
         >
-          <IconSettings class="w-5 h-5 shrink-0 text-gray-600" />
+          <Settings class="w-5 h-5 shrink-0 text-gray-600" />
           <span class="text-gray-900 font-medium">Configurações</span>
-        </RouterLink>
+        </button>
+        <SettingsDialog v-model:open="settingsDialogOpen" />
       </div>
     </div>
   </aside>
