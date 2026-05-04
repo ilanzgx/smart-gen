@@ -19,8 +19,8 @@ void SmartGenWifi::connect() {
 
   Serial.print("Testando redes conhecidas.\n");
   int attempts = 0;
-  while(wifiMulti.run() != WL_CONNECTED && attempts < 15) {
-    delay(500);
+  while(wifiMulti.run() != WL_CONNECTED && attempts < 10) {
+    delay(300);
     Serial.print(".");
     attempts++;
   }
@@ -67,7 +67,7 @@ void SmartGenWifi::reconnect() {
   Serial.println("Tentando reconectar Wifi...");
   WiFi.reconnect();
 
-  delay(5000);
+  delay(3000);
 
   if(!isConnected()) {
     Serial.println("Falha na reconexão do Wifi. Reiniciando placa...");

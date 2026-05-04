@@ -22,6 +22,8 @@ void setup() {
   Serial.begin(BAUD);
   smartGenWifi.connect();
   smartGenSensors.init();
+
+  send();
 }
 
 void loop() {
@@ -34,33 +36,37 @@ void loop() {
       return;
     }
 
-    float temperature = smartGenSensors.getTemperature();
-    if (temperature <= -120.0) {
-      Serial.println("Leitura de temperatura inválida, ignorando...");
-      return;
-    }
+    send();
+  }
+}
 
-    float water = 37.2; // mock
+void send() {
+  float temperature = smartGenSensors.getTemperature();
+  if (temperature <= -120.0) {
+    Serial.println("Leitura de temperatura inválida, ignorando...");
+    return;
+  }
 
-    int statusCode = smartGenSupabase.sendReading(WiFi.macAddress().c_str(), temperature, water);
-    switch(statusCode) {
-      case 200:
-      case 201:
-      case 204:
-        Serial.println("Leitura enviada com sucesso!");
-        break;
-      case 404:
-        Serial.println("Falha! Placa não cadastrada ou URL errada (404).");
-        break;
-      case 500:
-        Serial.println("Falha ao enviar leitura! Erro interno do servidor (500)!");
-        break;
-      case -1:
-        Serial.println("Falha ao enviar leitura! Erro na conexão WiFi!");
-        break;
-      default:
-        Serial.printf("Falha ao enviar leitura! Status code: %d\n", statusCode);
-        break;
-    }
+  float water = 37.2; // mock
+
+  int statusCode = smartGenSupabase.sendReading(WiFi.macAddress().c_str(), temperature, water);
+  switch(statusCode) {
+    case 200:
+    case 201:
+    case 204:
+      Serial.println("Leitura enviada com sucesso!");
+      break;
+    case 404:
+      Serial.println("Falha! Placa não cadastrada ou URL errada (404).");
+      break;
+    case 500:
+      Serial.println("Falha ao enviar leitura! Erro interno do servidor (500)!");
+      break;
+    case -1:
+      Serial.println("Falha ao enviar leitura! Erro na conexão WiFi!");
+      break;
+    default:
+      Serial.printf("Falha ao enviar leitura! Status code: %d\n", statusCode);
+      break;
   }
 }
