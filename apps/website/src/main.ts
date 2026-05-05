@@ -11,25 +11,25 @@ const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
 
-const authStore = useAuthStore()
-const cleanUp = await authStore.initializeAuth()
-
-app.use(router)
-app.mount('#app')
-
 // Inicializa o plugin OTA (atualização over-the-air) e verifica se há atualizações.
 // Só funciona em dispositivos mobile.
 if (typeof window !== 'undefined') {
   otaUpdateService.initialize().then(async () => {
     if (!otaUpdateService.isNative) return
 
-    const result = await otaUpdateService.checkForUpdate().catch(() => null)
+    const result = await otaUpdateService.checkForUpdate()
     if (result) {
-      const otaStore = useOtaStore()
+      const otaStore = useOtaStore(pinia)
       otaStore.setPendingUpdate(result.bundle, result.version)
     }
   })
 }
+
+const authStore = useAuthStore()
+const cleanUp = await authStore.initializeAuth()
+
+app.use(router)
+app.mount('#app')
 
 // Quando for desmontar a aplicação, desativa o listener de eventos
 const originalUnmount = app.unmount
