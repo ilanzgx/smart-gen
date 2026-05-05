@@ -10,13 +10,15 @@
 #define MINUTES(m)           ((m) * 60000UL)
 
 #define ONE_WIRE_BUS         (5)
+#define TRIGGER_PIN          (25)
+#define ECHO_PIN             (35)
 
 SmartGenWifi smartGenWifi;
 SmartGenSupabase smartGenSupabase(supabaseUrl, supabaseKey);
-SmartGenSensors smartGenSensors(ONE_WIRE_BUS);
+SmartGenSensors smartGenSensors(ONE_WIRE_BUS, TRIGGER_PIN, ECHO_PIN);
 
 unsigned long lastTime = 0;
-const unsigned long timerDelay = MINUTES(10);
+const unsigned long timerDelay = MINUTES(5);
 
 void setup() {
   Serial.begin(BAUD);
@@ -47,7 +49,7 @@ void send() {
     return;
   }
 
-  float water = 37.2; // mock
+  float water = smartGenSensors.getWaterLevel();
 
   int statusCode = smartGenSupabase.sendReading(WiFi.macAddress().c_str(), temperature, water);
   switch(statusCode) {
