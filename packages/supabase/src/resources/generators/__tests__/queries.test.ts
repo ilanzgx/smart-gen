@@ -1,7 +1,6 @@
 import { getGeneratorById, getGenerators } from "../queries";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { Database } from "../../../database.types";
 
 describe("generators.queries testes unitários", () => {
   const mockSingle = vi.fn();
