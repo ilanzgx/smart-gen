@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { House, Zap, Bell, Settings } from 'lucide-vue-next'
+import { House, Zap, Plus, Bell, Settings } from 'lucide-vue-next'
 
 import CreateGeneratorDialog from '@/components/dialogs/CreateGeneratorDialog.vue'
 import SettingsDialog from '@/components/dialogs/SettingsDialog.vue'
@@ -50,7 +50,7 @@ const settingsDialogOpen = ref(false)
           active-class="bg-sky-100 !text-gray-900"
           @click="createGeneratorDialogOpen = true"
         >
-          <Zap class="w-5 h-5 shrink-0 text-gray-600" />
+          <Plus class="w-5 h-5 shrink-0 text-gray-600" />
           <span class="text-gray-900 font-semibold">Registrar Gerador</span>
         </button>
         <CreateGeneratorDialog v-model:open="createGeneratorDialogOpen" />

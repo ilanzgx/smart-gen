@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import {
   Dialog,
   DialogContent,
@@ -9,10 +10,13 @@ import {
   DialogClose,
   Button,
   Input,
+  Spinner,
 } from '@/components/ui'
 import { createGeneratorSchema } from '@smart-gen/shared'
 import { useForm, useField } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
+import { createGenerator, type Generator } from '@smart-gen/supabase'
+import { supabase } from '@/lib/supabase'
 
 const props = defineProps<{
   open?: boolean
@@ -20,6 +24,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
+  (e: 'generator-created', generator: Generator): void
 }>()
 
 const { handleSubmit, errors, resetForm } = useForm({
@@ -35,17 +40,28 @@ const { value: name } = useField<string>('name')
 const { value: description } = useField<string>('description')
 const { value: mac_address } = useField<string>('mac_address')
 
+const isLoading = ref(false)
+const submitError = ref<string | null>(null)
+
 const onSubmit = handleSubmit(async (values) => {
+  isLoading.value = true
+  submitError.value = null
+
   try {
-    console.log(
-      `Nome: ${values.name}, Descrição: ${values.description}, MAC: ${values.mac_address}`,
-    )
-    // Desenvolver a funcionalidade de criar gerador no pacote supabase
-    //
-    resetForm()
+    const generator = await createGenerator(supabase, {
+      name: values.name,
+      description: values.description,
+      esp32_id: values.mac_address,
+    })
+
+    emit('generator-created', generator)
     emit('update:open', false)
-  } catch (error) {
-    console.error(error)
+    resetForm()
+  } catch (error: unknown) {
+    submitError.value = error instanceof Error ? error.message : 'Erro ao criar gerador'
+    console.error('Erro ao criar gerador:', error)
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
@@ -82,13 +98,21 @@ const onSubmit = handleSubmit(async (values) => {
             }}</span>
           </div>
 
+          <div v-if="submitError" class="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-sm text-red-600">{{ submitError }}</p>
+          </div>
+
           <DialogFooter>
             <DialogClose as-child>
-              <Button type="button" @click="(emit('update:open', false), resetForm())"
-                >Cancelar</Button
-              >
+              <Button type="button" variant="outline" @click="resetForm()">Cancelar</Button>
             </DialogClose>
-            <Button type="submit"> Completar Registro </Button>
+            <Button type="submit" :disabled="isLoading">
+              <span v-if="isLoading" class="flex items-center gap-2">
+                <Spinner />
+                Criando...
+              </span>
+              <span v-else>Completar Registro</span>
+            </Button>
           </DialogFooter>
         </form>
       </div>
