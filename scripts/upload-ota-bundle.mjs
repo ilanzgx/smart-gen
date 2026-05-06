@@ -76,7 +76,23 @@ async function buildAndUpload() {
     process.exit(1);
   }
 
-  console.log(`Successfully uploaded latest.zip to ${bucketName}`);
+  // Gerar e fazer upload de version.json para que a Edge Function possa ler a versão correta
+  const version = process.env.GITHUB_SHA || Date.now().toString();
+  const versionJsonContent = JSON.stringify({ version });
+  
+  const { error: versionError } = await supabase.storage
+    .from(bucketName)
+    .upload("version.json", versionJsonContent, {
+      contentType: "application/json",
+      upsert: true,
+    });
+
+  if (versionError) {
+    console.error("Failed to upload version.json:", versionError.message);
+    process.exit(1);
+  }
+
+  console.log(`Successfully uploaded latest.zip and version.json to ${bucketName}`);
 
   fs.unlinkSync(zipPath);
 

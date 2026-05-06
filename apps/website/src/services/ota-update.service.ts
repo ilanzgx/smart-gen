@@ -68,7 +68,12 @@ export class OtaUpdateService {
       if (!versionInfo) return null
 
       const current = await this.updater.current()
-      const currentVersion = current?.bundle?.version ?? 'builtin'
+      let currentVersion = current?.bundle?.version ?? 'builtin'
+
+      // Usa o GITHUB_SHA injetado no build (se existir)
+      if (currentVersion === 'builtin' && import.meta.env.VITE_APP_VERSION) {
+        currentVersion = import.meta.env.VITE_APP_VERSION
+      }
 
       if (currentVersion === versionInfo.version) {
         console.log(OTA_TAG, `Already on latest: ${currentVersion}`)
