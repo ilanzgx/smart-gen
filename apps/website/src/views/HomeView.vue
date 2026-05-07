@@ -9,7 +9,12 @@ import ThermometerGauge from '@/components/ThermometerGauge.vue'
     <header
       class="bg-white shadow-xl p-2 flex flex-wrap justify-between items-center mb-2 border border-gray-200 place-content-between"
     >
-      <h1 class="text-4xl font-bold  md:mr-auto">⚡ Smart Gen</h1>
+      <div class="md:pl-4">
+        <RouterLink to="/">
+          <img class="w-auto h-10" src="/images/logo.webp" alt="Logo" />
+        </RouterLink>
+      </div>
+
       <nav class="mx-auto md:m-2 m-10 flex flex-wrap">
         <RouterLink to="/login" class="bg-black m-1 p-2 text-white rounded-xl hover:bg-gray-700">
           Fazer Login
@@ -94,11 +99,12 @@ import ThermometerGauge from '@/components/ThermometerGauge.vue'
     </main>
   </div>
 
-  <footer class="bg-white border-t border-gray-100 py-4 text-center text-sm text-gray-400 mt-5 flex flex-wrap gap-5 justify-center">
+  <footer
+    class="bg-white border-t border-gray-100 py-4 text-center text-sm text-gray-400 mt-5 flex flex-wrap gap-5 justify-center"
+  >
     <span>Smart gen&trade;</span>
     <a class="underline">sobre nós</a>
   </footer>
-
 </template>
 
 <style>

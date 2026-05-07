@@ -3,40 +3,32 @@ import { ref } from 'vue'
 import DashboardLayout from '@/components/layouts/DashboardLayout.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { Input, Button } from '@/components/ui'
-import {
-  UserRound,
-  Pen,
-  LockIcon,
-  UserRoundKeyIcon,
-  XIcon,
-  CheckIcon,
-} from 'lucide-vue-next'
-
+import { UserRound, Pen, LockIcon, UserRoundKeyIcon, XIcon, CheckIcon } from 'lucide-vue-next'
 
 const { user } = useAuthStore()
-var name = ref(user?.user_metadata.name)
+const name = ref(user?.user_metadata.name)
 const name_temp = ref(name.value)
 const email = ref(user?.user_metadata.email)
 
 const elmBoxAlteracao = ref()
 const elmInputName = ref()
 
-function mostrarBox(){
+function mostrarBox() {
   elmBoxAlteracao.value.classList.remove('hidden')
 }
-function esconderBox(){
+function esconderBox() {
   elmBoxAlteracao.value.classList.add('hidden')
 }
 
-function salvarAlte(){
-  console.log("alterações salvas")
+function salvarAlte() {
+  console.log('alterações salvas')
   name.value = name_temp.value
   esconderBox()
 }
 
-function descartarAlte(){
+function descartarAlte() {
   name_temp.value = name.value
-  console.log("alterações descartadas")
+  console.log('alterações descartadas')
   esconderBox()
 }
 </script>
@@ -59,7 +51,7 @@ function descartarAlte(){
         <div class="flex flex-col">
           <label>nome do usuario:</label>
           <div class="flex bg-gray-200 hover:bg-gray-100 rounded-lg relative">
-            <Input @change="mostrarBox" ref="elmInputName" class="w-full" v-model="name_temp"/>
+            <Input @change="mostrarBox" ref="elmInputName" class="w-full" v-model="name_temp" />
             <pen class="mx-2 absolute right-0 bottom-2"></pen>
           </div>
 
@@ -76,7 +68,10 @@ function descartarAlte(){
           </div>
         </div>
 
-        <div ref="elmBoxAlteracao" class="hidden flex flex-col md:flex-row w-full justify-around gap-5 my-5">
+        <div
+          ref="elmBoxAlteracao"
+          class="hidden flex flex-col md:flex-row w-full justify-around gap-5 my-5"
+        >
           <Button @click="salvarAlte" class="m-2 ring-2 ring-green-600 hover:bg-green-600"
             ><CheckIcon></CheckIcon> salvar alterações</Button
           >

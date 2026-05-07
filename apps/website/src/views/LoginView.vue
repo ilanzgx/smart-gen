@@ -27,6 +27,12 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
+  <div class="absolute top-4 left-4">
+    <RouterLink to="/">
+      <img class="w-auto h-8" src="/images/logo.webp" alt="Logo" />
+    </RouterLink>
+  </div>
+
   <main class="flex min-h-screen">
     <div class="flex-1 flex items-center justify-center p-4 sm:p-8">
       <div class="w-full max-w-md">

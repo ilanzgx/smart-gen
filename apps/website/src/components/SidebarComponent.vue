@@ -18,7 +18,7 @@ const settingsDialogOpen = ref(false)
       <!-- Logo -->
       <div class="mb-8 px-2">
         <RouterLink to="/dashboard">
-          <h1 class="text-2xl font-bold text-gray-800">⚡ Smart Gen</h1>
+          <img class="md:w-full" src="/images/logo.webp" alt="Logo" />
         </RouterLink>
       </div>
 
