@@ -7,6 +7,7 @@ import {
   getGenerators,
   subscribeToGeneratorReadings,
   type Generator,
+  type Leitura,
 } from '@smart-gen/supabase'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 import WaterLevelChart from '@/components/generators/WaterLevelChart.vue'
@@ -31,6 +32,7 @@ const selectedGenerator = computed(
 const lastWaterLevel = ref(0)
 const lastTemperature = ref(0)
 const lastTimestamp = ref<string | null>(null)
+const lastReadingForCharts = ref<Leitura | null>(null)
 const isOperating = ref(false)
 
 let unsubscribeRealtime: (() => Promise<void>) | null = null
@@ -73,12 +75,13 @@ const updateDashboardFromReading = (reading: {
   lastWaterLevel.value = reading.nivel_agua ?? 0
   lastTemperature.value = reading.temperatura ?? 0
   lastTimestamp.value = reading.timestamp ?? null
+  lastReadingForCharts.value = reading as Leitura
 
   if (reading.timestamp) {
     const readingTime = new Date(reading.timestamp).getTime()
     const now = Date.now()
-    const oneHourInMilliseconds = 60 * 60 * 1000
-    isOperating.value = now - readingTime <= oneHourInMilliseconds
+    const thirtyMinutesInMilliseconds = 30 * 60 * 1000
+    isOperating.value = now - readingTime <= thirtyMinutesInMilliseconds
   } else {
     isOperating.value = false
   }
@@ -109,9 +112,9 @@ const fetchDashboardData = async () => {
   if (lastReading?.timestamp) {
     const readingTime = new Date(lastReading.timestamp).getTime()
     const now = Date.now()
-    const oneHourInMilliseconds = 60 * 60 * 1000
+    const thirtyMinutesInMilliseconds = 30 * 60 * 1000
 
-    isOperating.value = now - readingTime <= oneHourInMilliseconds
+    isOperating.value = now - readingTime <= thirtyMinutesInMilliseconds
   } else {
     isOperating.value = false
   }
@@ -290,6 +293,7 @@ const formattedLastSync = computed(() => {
             v-if="selectedGenerator"
             :key="selectedGenerator.id"
             :generator-id="selectedGenerator.id"
+            :last-reading="lastReadingForCharts"
           />
         </div>
         <!-- Card de gráfico de nível de água -->
@@ -301,6 +305,7 @@ const formattedLastSync = computed(() => {
             v-if="selectedGenerator"
             :key="selectedGenerator.id"
             :generator-id="selectedGenerator.id"
+            :last-reading="lastReadingForCharts"
           />
         </div>
       </div>

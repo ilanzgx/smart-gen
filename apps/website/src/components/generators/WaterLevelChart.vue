@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { type ApexOptions, type ApexAxisChartSeries } from 'apexcharts'
 import VueApexCharts from 'vue3-apexcharts'
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import { getReadingsByGeneratorId, type Leitura } from '@smart-gen/supabase'
 import { supabase } from '@/lib/supabase'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const props = defineProps<{
   generatorId: string
+  lastReading?: Leitura | null
 }>()
 const loading = ref(true)
 
@@ -99,6 +100,28 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+watch(
+  () => props.lastReading,
+  (newReading) => {
+    if (newReading?.timestamp) {
+      // console.log('[WaterLevelChart] Recebido via prop:', newReading)
+
+      // Evita duplicatas verificando timestamp
+      const exists = allReadings.value.some(
+        (r) => r.timestamp === newReading.timestamp && r.nivel_agua === newReading.nivel_agua,
+      )
+
+      if (!exists) {
+        allReadings.value.push(newReading)
+        allReadings.value.sort(
+          (a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime(),
+        )
+      }
+    }
+  },
+  { immediate: false },
+)
 </script>
 
 <template>
