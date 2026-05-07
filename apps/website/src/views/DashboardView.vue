@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { supabase } from '@/lib/supabase'
-import { getLastReadingByGeneratorId, getGenerators, type Generator } from '@smart-gen/supabase'
+import {
+  getLastReadingByGeneratorId,
+  getGenerators,
+  subscribeToGeneratorReadings,
+  type Generator,
+} from '@smart-gen/supabase'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
 import WaterLevelChart from '@/components/generators/WaterLevelChart.vue'
 import WaterGauge from '@/components/WaterGauge.vue'
@@ -27,6 +32,57 @@ const lastWaterLevel = ref(0)
 const lastTemperature = ref(0)
 const lastTimestamp = ref<string | null>(null)
 const isOperating = ref(false)
+
+let unsubscribeRealtime: (() => Promise<void>) | null = null
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const setupRealtime = async () => {
+  // Cancela o timer de debounce anterior se existir
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
+
+  debounceTimer = setTimeout(async () => {
+    // Cancela a inscrição anterior
+    if (unsubscribeRealtime) {
+      await unsubscribeRealtime()
+      unsubscribeRealtime = null
+    }
+
+    if (!selectedGeneratorId.value) return
+
+    // Cria nova inscrição
+    const { unsubscribe } = subscribeToGeneratorReadings(
+      supabase,
+      selectedGeneratorId.value,
+      (payload) => {
+        console.log('[Dashboard] Nova leitura recebida via Realtime:', payload.new)
+        updateDashboardFromReading(payload.new)
+      },
+    )
+    unsubscribeRealtime = unsubscribe
+  }, 500)
+}
+
+const updateDashboardFromReading = (reading: {
+  nivel_agua: number | null
+  temperatura: number | null
+  timestamp: string | null
+}) => {
+  lastWaterLevel.value = reading.nivel_agua ?? 0
+  lastTemperature.value = reading.temperatura ?? 0
+  lastTimestamp.value = reading.timestamp ?? null
+
+  if (reading.timestamp) {
+    const readingTime = new Date(reading.timestamp).getTime()
+    const now = Date.now()
+    const oneHourInMilliseconds = 60 * 60 * 1000
+    isOperating.value = now - readingTime <= oneHourInMilliseconds
+  } else {
+    isOperating.value = false
+  }
+}
 
 const getAllGenerators = async () => {
   const response: Generator[] = await getGenerators(supabase)
@@ -61,13 +117,30 @@ const fetchDashboardData = async () => {
   }
 }
 
-watch(selectedGeneratorId, async () => {
-  await fetchDashboardData()
-})
+watch(
+  () => selectedGeneratorId.value,
+  async (newId, oldId) => {
+    if (newId === oldId) return
+
+    await fetchDashboardData()
+    setupRealtime()
+  },
+)
 
 onMounted(async () => {
   await getAllGenerators()
   await fetchDashboardData()
+  await setupRealtime()
+})
+
+onUnmounted(async () => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+
+  if (unsubscribeRealtime) {
+    await unsubscribeRealtime()
+  }
 })
 
 const formattedLastSync = computed(() => {

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import AboutView from '../views/AboutView.vue'
-import NotFoundView from '../views/NotFoundView.vue'
+import HomeView from '@/views/HomeView.vue'
+import AboutView from '@/views/AboutView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 import LoginView from '@/views/LoginView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import ProfileView from '@/views/ProfileView.vue'
@@ -47,7 +47,7 @@ const router = createRouter({
       path: '/cadastrar',
       name: 'register',
       component: RegisterView,
-      alias: ['/cadastro', '/signup', '/register'],
+      alias: ['/cadastro', '/signup', '/register', '/registrar'],
       meta: {
         public: true,
       },
@@ -129,7 +129,10 @@ router.beforeEach((to) => {
   // redireciona para o dashboard
   if (
     authStore.isAuthenticated &&
-    (to.name === 'login' || to.name === 'register' || to.name === 'home' || to.name === 'recover-password')
+    (to.name === 'login' ||
+      to.name === 'register' ||
+      to.name === 'home' ||
+      to.name === 'recover-password')
   ) {
     return { name: 'dashboard' }
   }
