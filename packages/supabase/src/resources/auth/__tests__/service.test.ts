@@ -9,31 +9,49 @@ import {
   getUser,
   resetPasswordForEmail,
   updatePassword,
+  updateProfile,
+  updateEmail,
 } from "../service";
 
 describe("auth.service testes unitários", () => {
-  const mockSignIn = vi.fn();
-  const mockSignUp = vi.fn();
-  const mockSignOut = vi.fn();
-  const mockGetSession = vi.fn();
-  const mockGetUser = vi.fn();
-  const mockResetPasswordForEmail = vi.fn();
-  const mockUpdateUser = vi.fn();
-
-  const mockSupabase = {
-    auth: {
-      signInWithPassword: mockSignIn,
-      signUp: mockSignUp,
-      signOut: mockSignOut,
-      getSession: mockGetSession,
-      getUser: mockGetUser,
-      resetPasswordForEmail: mockResetPasswordForEmail,
-      updateUser: mockUpdateUser,
-    },
-  } as unknown as SupabaseClient;
+  let mockSignIn: ReturnType<typeof vi.fn>;
+  let mockSignUp: ReturnType<typeof vi.fn>;
+  let mockSignOut: ReturnType<typeof vi.fn>;
+  let mockGetSession: ReturnType<typeof vi.fn>;
+  let mockGetUser: ReturnType<typeof vi.fn>;
+  let mockResetPasswordForEmail: ReturnType<typeof vi.fn>;
+  let mockUpdateUser: ReturnType<typeof vi.fn>;
+  let mockEqFn: ReturnType<typeof vi.fn>;
+  let mockUpdateFn: ReturnType<typeof vi.fn>;
+  let mockFrom: ReturnType<typeof vi.fn>;
+  let mockSupabase: SupabaseClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockSignIn = vi.fn();
+    mockSignUp = vi.fn();
+    mockSignOut = vi.fn();
+    mockGetSession = vi.fn();
+    mockGetUser = vi.fn();
+    mockResetPasswordForEmail = vi.fn();
+    mockUpdateUser = vi.fn();
+    mockEqFn = vi.fn().mockResolvedValue({ error: null });
+    mockUpdateFn = vi.fn().mockReturnValue({ eq: mockEqFn });
+    mockFrom = vi.fn().mockReturnValue({ update: mockUpdateFn });
+
+    mockSupabase = {
+      auth: {
+        signInWithPassword: mockSignIn,
+        signUp: mockSignUp,
+        signOut: mockSignOut,
+        getSession: mockGetSession,
+        getUser: mockGetUser,
+        resetPasswordForEmail: mockResetPasswordForEmail,
+        updateUser: mockUpdateUser,
+      },
+      from: mockFrom,
+    } as unknown as SupabaseClient;
   });
 
   it("deve realizar login do usuário", async () => {
@@ -280,5 +298,77 @@ describe("auth.service testes unitários", () => {
     await expect(updatePassword(mockSupabase, "nova-senha-123")).rejects.toEqual(
       mockError,
     );
+  });
+
+  it("deve atualizar o perfil do usuário com sucesso", async () => {
+    // Arrange
+    mockUpdateUser.mockResolvedValue({ data: { user: {} }, error: null });
+
+    // Act
+    await updateProfile(mockSupabase, { name: "Novo Nome" });
+
+    // Assert
+    expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+      data: { name: "Novo Nome" },
+    });
+  });
+
+  it("deve lançar um erro se a atualização do perfil falhar", async () => {
+    // Arrange
+    const mockError = { message: "Erro ao atualizar perfil" };
+    mockUpdateUser.mockResolvedValue({ data: null, error: mockError });
+
+    // Act & Assert
+    await expect(updateProfile(mockSupabase, { name: "Novo Nome" })).rejects.toEqual(
+      mockError,
+    );
+  });
+
+  it("deve atualizar o email do usuário e a tabela usuario com sucesso", async () => {
+    // Arrange
+    const mockUser = { user: { id: "user-123" } };
+    mockUpdateUser.mockResolvedValue({ data: mockUser, error: null });
+
+    // Act
+    await updateEmail(mockSupabase, "novo@email.com");
+
+    // Assert
+    expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+      email: "novo@email.com",
+    });
+    expect(mockSupabase.from).toHaveBeenCalledWith("usuario");
+    expect(mockUpdateFn).toHaveBeenCalledWith({ email: "novo@email.com" });
+    expect(mockEqFn).toHaveBeenCalledWith("id", "user-123");
+  });
+
+  it("deve lançar um erro se a atualização do email no auth falhar", async () => {
+    // Arrange
+    const mockError = { message: "Erro ao atualizar email no auth" };
+    mockUpdateUser.mockResolvedValue({ data: null, error: mockError });
+
+    // Act & Assert
+    await expect(updateEmail(mockSupabase, "novo@email.com")).rejects.toEqual(mockError);
+  });
+
+  it("deve lançar um erro se não houver usuário após atualizar email", async () => {
+    // Arrange
+    const mockUser = { user: null };
+    mockUpdateUser.mockResolvedValue({ data: mockUser, error: null });
+
+    // Act & Assert
+    await expect(updateEmail(mockSupabase, "novo@email.com")).rejects.toThrow(
+      "Não foi possível obter o ID do usuário após atualização.",
+    );
+  });
+
+  it("deve lançar um erro se a atualização na tabela usuario falhar", async () => {
+    // Arrange
+    const mockUser = { user: { id: "user-123" } };
+    mockUpdateUser.mockResolvedValue({ data: mockUser, error: null });
+    const mockDbError = { message: "Erro ao atualizar tabela usuario" };
+    mockEqFn.mockResolvedValue({ error: mockDbError });
+
+    // Act & Assert
+    await expect(updateEmail(mockSupabase, "novo@email.com")).rejects.toEqual(mockDbError);
   });
 });
