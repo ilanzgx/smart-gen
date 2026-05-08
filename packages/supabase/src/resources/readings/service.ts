@@ -10,21 +10,17 @@ const RETRY_DELAY_MS = 1000;
  * @param {SupabaseClient} supabase - Instância do Supabase.
  * @param {string} generatorId - ID do gerador para filtrar as leituras.
  * @param {(payload: { new: Leitura; old: Leitura | null }) => void} callback - Função chamada quando uma nova leitura é inserida.
+ * @param {() => void} [onSubscribed] - Função opcional chamada quando a conexão é (re)estabelecida.
  * @returns {{ unsubscribe: () => Promise<void> }} Objeto com função para cancelar a inscrição.
  */
-export const subscribeToGeneratorReadings = (
-  supabase: SupabaseClient,
-  generatorId: string,
-  callback: (payload: { new: Leitura; old: Leitura | null }) => void,
-): { unsubscribe: () => Promise<void> } => {
-  console.log(
-    `[Realtime] Tentando conectar ao canal: registro-gerador-${generatorId}`,
-  );
+export const subscribeToGeneratorReadings = (supabase: SupabaseClient, generatorId: string, callback: (payload: { new: Leitura; old: Leitura | null }) => void, onSubscribed?: () => void): { unsubscribe: () => Promise<void> } => {
+  console.log(`[Realtime] Tentando conectar ao canal: registro-gerador-${generatorId}`);
 
   let retries = 0;
   let channel: ReturnType<SupabaseClient["channel"]> | null = null;
   let retryTimeout: ReturnType<typeof setTimeout> | null = null;
   let isUnsubscribed = false;
+  let hasSubscribedBefore = false;
 
   const setupChannel = () => {
     if (isUnsubscribed) return;
@@ -53,6 +49,11 @@ export const subscribeToGeneratorReadings = (
 
       if (status === "SUBSCRIBED") {
         console.log("[Realtime] ✅ Conectado com sucesso ao canal!");
+        if (hasSubscribedBefore) {
+          onSubscribed?.();
+        } else {
+          hasSubscribedBefore = true;
+        }
         retries = 0;
       }
 
@@ -65,9 +66,7 @@ export const subscribeToGeneratorReadings = (
         }
 
         retries++;
-        console.log(
-          `[Realtime] Tentando reconectar (${retries}/${MAX_RETRIES})...`,
-        );
+        console.log(`[Realtime] Tentando reconectar (${retries}/${MAX_RETRIES})...`);
 
         retryTimeout = setTimeout(() => {
           if (channel && !isUnsubscribed) {
@@ -101,9 +100,7 @@ export const subscribeToGeneratorReadings = (
         retryTimeout = null;
       }
       if (channel) {
-        console.log(
-          `[Realtime] Cancelando inscrição do canal: ${channel.topic}`,
-        );
+        console.log(`[Realtime] Cancelando inscrição do canal: ${channel.topic}`);
         await supabase.removeChannel(channel);
         channel = null;
       }

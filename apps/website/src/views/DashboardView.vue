@@ -62,6 +62,11 @@ const setupRealtime = async () => {
         console.log('[Dashboard] Nova leitura recebida via Realtime:', payload.new)
         updateDashboardFromReading(payload.new)
       },
+      // Refaz fetch quando reconecta (dados podem estar desatualizados)
+      () => {
+        console.log('[Dashboard] Canal reconectado, atualizando dados...')
+        fetchDashboardData()
+      },
     )
     unsubscribeRealtime = unsubscribe
   }, 500)
@@ -72,6 +77,9 @@ const updateDashboardFromReading = (reading: {
   temperatura: number | null
   timestamp: string | null
 }) => {
+  // Só atualiza se leitura for diferente da atual
+  if (reading.timestamp === lastTimestamp.value) return
+
   lastWaterLevel.value = reading.nivel_agua ?? 0
   lastTemperature.value = reading.temperatura ?? 0
   lastTimestamp.value = reading.timestamp ?? null
@@ -100,14 +108,19 @@ const fetchDashboardData = async () => {
   if (!selectedGeneratorId.value) return
 
   const lastReading = await getLastReadingByGeneratorId(supabase, selectedGeneratorId.value)
+
+  // Só atualiza se leitura for diferente da atual
+  if (lastReading?.timestamp === lastTimestamp.value) return
+
   lastWaterLevel.value = lastReading?.nivel_agua ?? 0
   lastTemperature.value = lastReading?.temperatura ?? 0
   lastTimestamp.value = lastReading?.timestamp ?? null
+  lastReadingForCharts.value = lastReading as Leitura
 
   /*
    * Lógica do status de operação:
-   * Se não houver uma leitura nas ultimas 1 horas, o gerador está parado.
-   * Se houver uma leitura nas ultimas 1 horas, o gerador está operando.
+   * Se não houver uma leitura nos ultimos 30 minutos, o gerador está parado.
+   * Se houver uma leitura nos ultimos 30 minutos, o gerador está operando.
    */
   if (lastReading?.timestamp) {
     const readingTime = new Date(lastReading.timestamp).getTime()
@@ -120,20 +133,22 @@ const fetchDashboardData = async () => {
   }
 }
 
+// Isso é chamado sempre quando o valor de selectedGeneratorId mudar
+// Fazendo o fetch + realtime do gerador selecionado em especifico
 watch(
   () => selectedGeneratorId.value,
   async (newId, oldId) => {
     if (newId === oldId) return
+    if (!newId) return
 
     await fetchDashboardData()
     setupRealtime()
   },
+  { immediate: true },
 )
 
 onMounted(async () => {
   await getAllGenerators()
-  await fetchDashboardData()
-  await setupRealtime()
 })
 
 onUnmounted(async () => {

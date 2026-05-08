@@ -168,4 +168,23 @@ describe("readings.service testes unitários", () => {
     // Cleanup
     vi.useRealTimers();
   });
+
+  it("deve chamar onSubscribed apenas em reconexão, não na conexão inicial", () => {
+    // Arrange
+    const mockOnSubscribed = vi.fn();
+
+    subscribeToGeneratorReadings(mockSupabase, "test-id", () => {}, mockOnSubscribed);
+
+    // Act - primeira conexão
+    channelSubscribeCallback("SUBSCRIBED");
+
+    // Assert - não deve chamar na primeira vez
+    expect(mockOnSubscribed).not.toHaveBeenCalled();
+
+    // Act - reconexão (segunda vez)
+    channelSubscribeCallback("SUBSCRIBED");
+
+    // Assert - deve chamar em reconexão
+    expect(mockOnSubscribed).toHaveBeenCalledTimes(1);
+  });
 });
