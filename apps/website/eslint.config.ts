@@ -28,7 +28,12 @@ export default defineConfigWithVueTs(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
-
+  {
+    files: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.vue'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'warn',
+    },
+  },
   {
     files: ['src/components/ui/**/*.vue', 'src/views/**/*.vue'],
     rules: {

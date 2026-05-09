@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { IconSparkles, IconLoader2, IconX } from '@tabler/icons-vue'
+import { IconSparkles, IconX } from '@tabler/icons-vue'
 import { useOtaStore } from '@/stores/ota.store'
 import { otaUpdateService } from '@/services/ota-update.service'
 
