@@ -6,7 +6,7 @@ import { otaUpdateService } from '@/services/ota-update.service'
 
 const otaStore = useOtaStore()
 
-const isVisible = computed(() => otaStore.pendingBundle !== null)
+const isVisible = computed(() => otaStore.pendingBundle !== null && !otaStore.isApplying)
 
 async function handleInstall() {
   if (!otaStore.pendingBundle) return
@@ -14,11 +14,11 @@ async function handleInstall() {
   otaStore.setApplying()
 
   try {
-    // Aplicação se reinicia sozinha quando a atualização é concluída com sucesso.
-    // Se por algum motivo nenhum reload ocorrer, limpa o banner como fallback.
+    // set() + reload() recarregam o app com o novo bundle.
+    // Se funcionar, o contexto JS é destruído e nada mais executa.
     await otaUpdateService.applyUpdate(otaStore.pendingBundle)
-    otaStore.clear()
   } catch {
+    // Se falhar, limpa o banner para não ficar travado
     otaStore.clear()
   }
 }
@@ -52,18 +52,15 @@ function dismiss() {
       <div class="flex items-center gap-1 border-l border-slate-700 pl-3">
         <button
           id="ota-install-button"
-          :disabled="otaStore.isApplying"
-          class="flex h-7 cursor-pointer items-center justify-center rounded-full bg-blue-600 px-3 text-xs font-semibold transition-all hover:bg-blue-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
+          class="flex h-7 cursor-pointer items-center justify-center rounded-full bg-blue-600 px-3 text-xs font-semibold transition-all hover:bg-blue-500 active:scale-95"
           @click="handleInstall"
         >
-          <IconLoader2 v-if="otaStore.isApplying" class="size-3.5 animate-spin" />
-          <span v-else>Instalar</span>
+          Instalar
         </button>
 
         <button
           @click="dismiss"
-          :disabled="otaStore.isApplying"
-          class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 hover:bg-slate-800 hover:text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
           aria-label="Dispensar"
         >
           <IconX class="size-4" />

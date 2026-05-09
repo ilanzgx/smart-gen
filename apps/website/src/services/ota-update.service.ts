@@ -3,11 +3,10 @@
  *
  * Usa modo manual (autoUpdate: false em capacitor.config.ts).
  * O fluxo:
- *   1. App inicia → notifyAppReady() diz ao plugin que o bundle carregou OK
- *   2. Busca nossa Edge Function para verificar se existe um novo bundle (via eTag)
- *   3. Se novo → faz download() do zip e notifica a store (usuário decide quando aplicar)
- *   4. Usuário clica em "Instalar" → set() para aplicar (app recarrega)
- *   5. Se igual → não faz nada
+ *   1. App inicia → notifyAppReady() confirma que o bundle carregou OK
+ *   2. Busca nossa Edge Function para verificar se existe um novo bundle
+ *   3. Se novo → download() do zip e notifica a store
+ *   4. Usuário clica "Instalar" → set({ id }) + reload() aplica imediatamente
  */
 
 import type { CapacitorUpdaterPlugin, BundleInfo } from '@capgo/capacitor-updater'
@@ -22,16 +21,12 @@ type OtaUpdater = CapacitorUpdaterPlugin
 
 const OTA_TAG = '[OTA]' as const
 const OTA_ENDPOINT = '/functions/v1/ota-version' as const
-const OTA_APPLIED_KEY = 'ota_applied_version' as const
 
 /**
- * Verifica se o objeto é uma resposta de versão OTA
- *
- * @description Essa função verifica se o objeto é uma resposta de versão OTA retornando
- * true se for, false caso contrário.
+ * Verifica se o objeto é uma resposta de versão OTA válida.
  *
  * @param {unknown} data - Objeto a ser verificado.
- * @returns {boolean} - True se o objeto for uma resposta de versão OTA, false caso contrário.
+ * @returns {boolean} - True se for uma resposta válida.
  */
 function isOtaVersionResponse(data: unknown): data is OtaVersionResponse {
   return (
@@ -49,15 +44,14 @@ export class OtaUpdateService {
 
   /**
    * @description Verifica se o app está rodando em ambiente nativo.
-   * @returns {boolean} - True se o app estiver rodando em ambiente nativo, false caso contrário.
+   * @returns {boolean} - True se estiver em ambiente nativo.
    */
   get isNative(): boolean {
     return this.updater !== null
   }
 
   /**
-   * @description Inicializa o serviço de atualização OTA.
-   * @returns {Promise<void>} - Void
+   * @description Inicializa o plugin OTA e notifica que o bundle atual está OK.
    */
   async initialize(): Promise<void> {
     if (typeof window === 'undefined' || !('Capacitor' in window)) return
@@ -76,7 +70,7 @@ export class OtaUpdateService {
 
   /**
    * @description Verifica se há atualização disponível e faz download do bundle.
-   * @returns {Promise<{ bundle: BundleInfo; version: string } | null>} - O bundle baixado e a versão, ou null se não houver atualização.
+   * @returns O bundle baixado e a versão, ou null se não houver atualização.
    */
   async checkForUpdate(): Promise<{ bundle: BundleInfo; version: string } | null> {
     if (!this.updater) return null
@@ -88,20 +82,13 @@ export class OtaUpdateService {
       const current = await this.updater.current()
       let currentVersion = current?.bundle?.version ?? 'builtin'
 
-      // Usa o GITHUB_SHA injetado no build (se existir)
+      // Usa o GITHUB_SHA injetado no build como fallback quando rodando o bundle nativo
       if (currentVersion === 'builtin' && import.meta.env.VITE_APP_VERSION) {
         currentVersion = import.meta.env.VITE_APP_VERSION
       }
 
       if (currentVersion === versionInfo.version) {
         console.log(OTA_TAG, `Already on latest: ${currentVersion}`)
-        return null
-      }
-
-      // Pula se essa versão já foi aplicada via set() e aguarda reinício
-      const appliedVersion = localStorage.getItem(OTA_APPLIED_KEY)
-      if (appliedVersion === versionInfo.version) {
-        console.log(OTA_TAG, `Version ${versionInfo.version} already applied, waiting restart`)
         return null
       }
 
@@ -123,38 +110,24 @@ export class OtaUpdateService {
 
   /**
    * @description Aplica um bundle previamente baixado.
-   * Após set(), tenta reload nativo. Se a execução continuar (modo manual),
-   * marca a versão como aplicada no localStorage para evitar re-download.
-   * O bundle será carregado no próximo reinício do app.
+   * Usa set({ id }) para marcar o bundle como ativo e reload() para recarregar.
    *
    * @param {BundleInfo} bundle - O bundle a ser aplicado.
-   * @returns {Promise<void>} - Void
    */
   async applyUpdate(bundle: BundleInfo): Promise<void> {
     if (!this.updater) return
 
     console.log(OTA_TAG, `Applying bundle: ${bundle.version}`)
-    await this.updater.set(bundle)
 
-    // set() deve ser terminal (destroi o contexto JS), mas no modo manual
-    // ele pode apenas preparar o bundle para o próximo reinício.
-    // Se a execução chegar aqui, tenta reload nativo.
-    console.log(OTA_TAG, 'set() did not reload, trying plugin reload…')
-    localStorage.setItem(OTA_APPLIED_KEY, bundle.version)
-
-    try {
-      await this.updater.reload()
-    } catch {
-      // reload() falhou — bundle será aplicado no próximo reinício do app.
-      // NÃO usar window.location.reload() pois recarrega o bundle built-in,
-      // causando um loop infinito de detecção de atualização.
-      console.warn(OTA_TAG, 'Plugin reload failed. Update will apply on next app restart.')
-    }
+    // set({ id }) marca o bundle como ativo — conforme API do Capgo
+    await this.updater.set({ id: bundle.id })
+    // reload() força o recarregamento imediato com o novo bundle
+    await this.updater.reload()
   }
 
   /**
-   * @description Busca a versão mais recente do bundle.
-   * @returns {Promise<OtaVersionResponse | null>} - A versão mais recente do bundle, ou null se não houver atualização.
+   * @description Busca a versão mais recente do bundle na Edge Function.
+   * @returns A versão mais recente ou null se indisponível.
    */
   private async fetchLatestVersion(): Promise<OtaVersionResponse | null> {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
