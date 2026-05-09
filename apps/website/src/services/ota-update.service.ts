@@ -82,13 +82,22 @@ export class OtaUpdateService {
       const current = await this.updater.current()
       let currentVersion = current?.bundle?.version ?? 'builtin'
 
-      // Usa o GITHUB_SHA injetado no build como fallback quando rodando o bundle nativo
       if (currentVersion === 'builtin' && import.meta.env.VITE_APP_VERSION) {
         currentVersion = import.meta.env.VITE_APP_VERSION
       }
 
       if (currentVersion === versionInfo.version) {
         console.log(OTA_TAG, `Already on latest: ${currentVersion}`)
+        localStorage.removeItem('pending_ota_version') // Limpa o storage pois o update foi um sucesso
+        return null
+      }
+
+      const justAppliedVersion = localStorage.getItem('pending_ota_version')
+      if (justAppliedVersion === versionInfo.version) {
+        console.log(
+          OTA_TAG,
+          `Update applied but awaiting Cold Start for version: ${versionInfo.version}`,
+        )
         return null
       }
 
@@ -119,8 +128,11 @@ export class OtaUpdateService {
 
     console.log(OTA_TAG, `Applying bundle: ${bundle.version}`)
 
+    localStorage.setItem('pending_ota_version', bundle.version)
+
     // set({ id }) marca o bundle como ativo — conforme API do Capgo
     await this.updater.set({ id: bundle.id })
+
     // reload() força o recarregamento imediato com o novo bundle
     await this.updater.reload()
   }
