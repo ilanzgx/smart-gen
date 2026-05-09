@@ -22,6 +22,7 @@ type OtaUpdater = CapacitorUpdaterPlugin
 
 const OTA_TAG = '[OTA]' as const
 const OTA_ENDPOINT = '/functions/v1/ota-version' as const
+const OTA_APPLIED_KEY = 'ota_applied_version' as const
 
 /**
  * Verifica se o objeto é uma resposta de versão OTA
@@ -97,6 +98,13 @@ export class OtaUpdateService {
         return null
       }
 
+      // Pula se essa versão já foi aplicada via set() e aguarda reinício
+      const appliedVersion = localStorage.getItem(OTA_APPLIED_KEY)
+      if (appliedVersion === versionInfo.version) {
+        console.log(OTA_TAG, `Version ${versionInfo.version} already applied, waiting restart`)
+        return null
+      }
+
       console.log(OTA_TAG, `Update available: ${versionInfo.version} (current: ${currentVersion})`)
 
       const bundle = await this.updater.download({
@@ -115,10 +123,12 @@ export class OtaUpdateService {
 
   /**
    * @description Aplica um bundle previamente baixado.
+   * Após set(), tenta reload nativo. Se a execução continuar (modo manual),
+   * marca a versão como aplicada no localStorage para evitar re-download.
+   * O bundle será carregado no próximo reinício do app.
+   *
    * @param {BundleInfo} bundle - O bundle a ser aplicado.
    * @returns {Promise<void>} - Void
-   *
-   * @description Após a chamada, o app será recarregado (via plugin ou fallback web).
    */
   async applyUpdate(bundle: BundleInfo): Promise<void> {
     if (!this.updater) return
@@ -126,14 +136,19 @@ export class OtaUpdateService {
     console.log(OTA_TAG, `Applying bundle: ${bundle.version}`)
     await this.updater.set(bundle)
 
-    // set() deve ser modo terminal, mas no modo manual ele pode apenas preparar
-    // o bundle para o próximo reinício. Se a execução chegar aqui, força o
-    // reload explicitamente. acho que não deveria chegar aqui, mas caso chegue...
-    console.log(OTA_TAG, 'set() did not reload, forcing reload…')
+    // set() deve ser terminal (destroi o contexto JS), mas no modo manual
+    // ele pode apenas preparar o bundle para o próximo reinício.
+    // Se a execução chegar aqui, tenta reload nativo.
+    console.log(OTA_TAG, 'set() did not reload, trying plugin reload…')
+    localStorage.setItem(OTA_APPLIED_KEY, bundle.version)
+
     try {
       await this.updater.reload()
     } catch {
-      window.location.reload()
+      // reload() falhou — bundle será aplicado no próximo reinício do app.
+      // NÃO usar window.location.reload() pois recarrega o bundle built-in,
+      // causando um loop infinito de detecção de atualização.
+      console.warn(OTA_TAG, 'Plugin reload failed. Update will apply on next app restart.')
     }
   }
 

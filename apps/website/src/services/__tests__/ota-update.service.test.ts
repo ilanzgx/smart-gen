@@ -51,6 +51,7 @@ describe('OtaUpdateService testes unitários', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     globalThis.fetch = mockFetch
+    localStorage.clear()
     setEnvVars()
   })
 
@@ -254,10 +255,37 @@ describe('OtaUpdateService testes unitários', () => {
 
       errorSpy.mockRestore()
     })
+
+    it('deve pular download se versão já foi aplicada via localStorage', async () => {
+      // Arrange
+      const service = createServiceWithCapacitor()
+      await service.initialize()
+
+      localStorage.setItem('ota_applied_version', 'v2.0')
+
+      mockFetchResponse({
+        version: 'v2.0',
+        bundleUrl: 'https://cdn/latest.zip',
+        checksum: 'v2.0',
+      })
+      mockCurrent.mockResolvedValueOnce({ bundle: { version: 'v1.0' } })
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      // Act
+      const result = await service.checkForUpdate()
+
+      // Assert
+      expect(result).toBeNull()
+      expect(mockDownload).not.toHaveBeenCalled()
+      expect(logSpy).toHaveBeenCalledWith('[OTA]', 'Version v2.0 already applied, waiting restart')
+
+      logSpy.mockRestore()
+    })
   })
 
   describe('applyUpdate', () => {
-    it('deve chamar set() e reload() no updater com o bundle fornecido', async () => {
+    it('deve chamar set() e reload() e salvar versão no localStorage', async () => {
       // Arrange
       const service = createServiceWithCapacitor()
       await service.initialize()
@@ -274,11 +302,12 @@ describe('OtaUpdateService testes unitários', () => {
       // Assert
       expect(mockSet).toHaveBeenCalledWith(bundle)
       expect(mockReload).toHaveBeenCalledOnce()
+      expect(localStorage.getItem('ota_applied_version')).toBe('v2.0')
 
       logSpy.mockRestore()
     })
 
-    it('deve usar window.location.reload() se reload() do plugin falhar', async () => {
+    it('deve logar warning se reload() do plugin falhar (sem window.location.reload)', async () => {
       // Arrange
       const service = createServiceWithCapacitor()
       await service.initialize()
@@ -287,15 +316,8 @@ describe('OtaUpdateService testes unitários', () => {
       mockSet.mockResolvedValueOnce(undefined)
       mockReload.mockRejectedValueOnce(new Error('reload failed'))
 
-      const mockLocationReload = vi.fn()
-      const originalLocation = window.location
-      Object.defineProperty(window, 'location', {
-        value: { ...originalLocation, reload: mockLocationReload },
-        writable: true,
-        configurable: true,
-      })
-
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       // Act
       await service.applyUpdate(bundle)
@@ -303,14 +325,14 @@ describe('OtaUpdateService testes unitários', () => {
       // Assert
       expect(mockSet).toHaveBeenCalledWith(bundle)
       expect(mockReload).toHaveBeenCalledOnce()
-      expect(mockLocationReload).toHaveBeenCalledOnce()
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[OTA]',
+        'Plugin reload failed. Update will apply on next app restart.',
+      )
+      expect(localStorage.getItem('ota_applied_version')).toBe('v2.0')
 
-      Object.defineProperty(window, 'location', {
-        value: originalLocation,
-        writable: true,
-        configurable: true,
-      })
       logSpy.mockRestore()
+      warnSpy.mockRestore()
     })
 
     it('deve não fazer nada se o updater não foi inicializado', async () => {
@@ -323,6 +345,7 @@ describe('OtaUpdateService testes unitários', () => {
       // Assert
       expect(mockSet).not.toHaveBeenCalled()
       expect(mockReload).not.toHaveBeenCalled()
+      expect(localStorage.getItem('ota_applied_version')).toBeNull()
     })
   })
 
