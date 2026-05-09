@@ -5,6 +5,7 @@ const mockNotifyAppReady = vi.fn().mockResolvedValue({ bundle: { version: '1.0' 
 const mockCurrent = vi.fn()
 const mockDownload = vi.fn()
 const mockSet = vi.fn()
+const mockReload = vi.fn()
 
 vi.mock('@capgo/capacitor-updater', () => ({
   CapacitorUpdater: {
@@ -12,6 +13,7 @@ vi.mock('@capgo/capacitor-updater', () => ({
     current: (...args: unknown[]) => mockCurrent(...args),
     download: (...args: unknown[]) => mockDownload(...args),
     set: (...args: unknown[]) => mockSet(...args),
+    reload: (...args: unknown[]) => mockReload(...args),
   },
 }))
 
@@ -255,19 +257,60 @@ describe('OtaUpdateService testes unitários', () => {
   })
 
   describe('applyUpdate', () => {
-    it('deve chamar set() no updater com o bundle fornecido', async () => {
+    it('deve chamar set() e reload() no updater com o bundle fornecido', async () => {
       // Arrange
       const service = createServiceWithCapacitor()
       await service.initialize()
 
       const bundle = { version: 'v2.0', id: 'bundle-id' } as any
       mockSet.mockResolvedValueOnce(undefined)
+      mockReload.mockResolvedValueOnce(undefined)
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       // Act
       await service.applyUpdate(bundle)
 
       // Assert
       expect(mockSet).toHaveBeenCalledWith(bundle)
+      expect(mockReload).toHaveBeenCalledOnce()
+
+      logSpy.mockRestore()
+    })
+
+    it('deve usar window.location.reload() se reload() do plugin falhar', async () => {
+      // Arrange
+      const service = createServiceWithCapacitor()
+      await service.initialize()
+
+      const bundle = { version: 'v2.0', id: 'bundle-id' } as any
+      mockSet.mockResolvedValueOnce(undefined)
+      mockReload.mockRejectedValueOnce(new Error('reload failed'))
+
+      const mockLocationReload = vi.fn()
+      const originalLocation = window.location
+      Object.defineProperty(window, 'location', {
+        value: { ...originalLocation, reload: mockLocationReload },
+        writable: true,
+        configurable: true,
+      })
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      // Act
+      await service.applyUpdate(bundle)
+
+      // Assert
+      expect(mockSet).toHaveBeenCalledWith(bundle)
+      expect(mockReload).toHaveBeenCalledOnce()
+      expect(mockLocationReload).toHaveBeenCalledOnce()
+
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        writable: true,
+        configurable: true,
+      })
+      logSpy.mockRestore()
     })
 
     it('deve não fazer nada se o updater não foi inicializado', async () => {
@@ -279,6 +322,7 @@ describe('OtaUpdateService testes unitários', () => {
 
       // Assert
       expect(mockSet).not.toHaveBeenCalled()
+      expect(mockReload).not.toHaveBeenCalled()
     })
   })
 

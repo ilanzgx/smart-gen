@@ -1,13 +1,13 @@
 /**
- * OTA Update Service using @capgo/capacitor-updater
+ * Serviço de atualização OTA usando @capgo/capacitor-updater
  *
- * Uses manual mode (autoUpdate: false in capacitor.config.ts).
- * The flow:
- *   1. App boots → notifyAppReady() tells the plugin the bundle loaded OK
- *   2. Fetch our Edge Function to check if a new bundle exists (via eTag)
- *   3. If new → download() the zip and notify the store (user decides when to apply)
- *   4. User clicks "Install" → set() to apply it (app reloads)
- *   5. If same → do nothing
+ * Usa modo manual (autoUpdate: false em capacitor.config.ts).
+ * O fluxo:
+ *   1. App inicia → notifyAppReady() diz ao plugin que o bundle carregou OK
+ *   2. Busca nossa Edge Function para verificar se existe um novo bundle (via eTag)
+ *   3. Se novo → faz download() do zip e notifica a store (usuário decide quando aplicar)
+ *   4. Usuário clica em "Instalar" → set() para aplicar (app recarrega)
+ *   5. Se igual → não faz nada
  */
 
 import type { CapacitorUpdaterPlugin, BundleInfo } from '@capgo/capacitor-updater'
@@ -23,6 +23,15 @@ type OtaUpdater = CapacitorUpdaterPlugin
 const OTA_TAG = '[OTA]' as const
 const OTA_ENDPOINT = '/functions/v1/ota-version' as const
 
+/**
+ * Verifica se o objeto é uma resposta de versão OTA
+ *
+ * @description Essa função verifica se o objeto é uma resposta de versão OTA retornando
+ * true se for, false caso contrário.
+ *
+ * @param {unknown} data - Objeto a ser verificado.
+ * @returns {boolean} - True se o objeto for uma resposta de versão OTA, false caso contrário.
+ */
 function isOtaVersionResponse(data: unknown): data is OtaVersionResponse {
   return (
     typeof data === 'object' &&
@@ -37,10 +46,18 @@ function isOtaVersionResponse(data: unknown): data is OtaVersionResponse {
 export class OtaUpdateService {
   private updater: OtaUpdater | null = null
 
+  /**
+   * @description Verifica se o app está rodando em ambiente nativo.
+   * @returns {boolean} - True se o app estiver rodando em ambiente nativo, false caso contrário.
+   */
   get isNative(): boolean {
     return this.updater !== null
   }
 
+  /**
+   * @description Inicializa o serviço de atualização OTA.
+   * @returns {Promise<void>} - Void
+   */
   async initialize(): Promise<void> {
     if (typeof window === 'undefined' || !('Capacitor' in window)) return
 
@@ -57,8 +74,8 @@ export class OtaUpdateService {
   }
 
   /**
-   * Verifica se há atualização disponível e faz download do bundle.
-   * Retorna o bundle baixado e a versão, ou null se não houver atualização.
+   * @description Verifica se há atualização disponível e faz download do bundle.
+   * @returns {Promise<{ bundle: BundleInfo; version: string } | null>} - O bundle baixado e a versão, ou null se não houver atualização.
    */
   async checkForUpdate(): Promise<{ bundle: BundleInfo; version: string } | null> {
     if (!this.updater) return null
@@ -97,16 +114,33 @@ export class OtaUpdateService {
   }
 
   /**
-   * Aplica um bundle previamente baixado.
-   * Após a chamada, o app será recarregado automaticamente.
+   * @description Aplica um bundle previamente baixado.
+   * @param {BundleInfo} bundle - O bundle a ser aplicado.
+   * @returns {Promise<void>} - Void
+   *
+   * @description Após a chamada, o app será recarregado (via plugin ou fallback web).
    */
   async applyUpdate(bundle: BundleInfo): Promise<void> {
     if (!this.updater) return
 
     console.log(OTA_TAG, `Applying bundle: ${bundle.version}`)
     await this.updater.set(bundle)
+
+    // set() deve ser modo terminal, mas no modo manual ele pode apenas preparar
+    // o bundle para o próximo reinício. Se a execução chegar aqui, força o
+    // reload explicitamente. acho que não deveria chegar aqui, mas caso chegue...
+    console.log(OTA_TAG, 'set() did not reload, forcing reload…')
+    try {
+      await this.updater.reload()
+    } catch {
+      window.location.reload()
+    }
   }
 
+  /**
+   * @description Busca a versão mais recente do bundle.
+   * @returns {Promise<OtaVersionResponse | null>} - A versão mais recente do bundle, ou null se não houver atualização.
+   */
   private async fetchLatestVersion(): Promise<OtaVersionResponse | null> {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY

@@ -14,8 +14,10 @@ async function handleInstall() {
   otaStore.setApplying()
 
   try {
-    // Aplicação se reinicia sozinha quando a atualização é concluída com sucesso
+    // Aplicação se reinicia sozinha quando a atualização é concluída com sucesso.
+    // Se por algum motivo nenhum reload ocorrer, limpa o banner como fallback.
     await otaUpdateService.applyUpdate(otaStore.pendingBundle)
+    otaStore.clear()
   } catch {
     otaStore.clear()
   }
