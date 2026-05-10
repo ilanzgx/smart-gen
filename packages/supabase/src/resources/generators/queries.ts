@@ -12,7 +12,7 @@ export const getGenerators = async (
   const { data, error } = await supabase
     .from("gerador")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: true });
 
   if (error) throw new Error(error.message);
 

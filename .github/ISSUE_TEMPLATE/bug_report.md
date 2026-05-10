@@ -1,34 +1,19 @@
 ---
-name: "🐛 Relato de Bug"
-about: "Relate algo que não está funcionando como deveria"
+name: "🐛 Bug"
+about: "Reportar algo que não está funcionando"
 title: "[BUG] "
 labels: ["bug"]
 assignees: ""
-
 ---
 
-### 📝 Descrição do Problema
-Uma descrição clara e concisa do que é o bug.
+## O que aconteceu?
 
-### 🚀 Passos para Reproduzir
-1. Vá para '...'
-2. Clique em '....'
-3. Role para baixo até '....'
-4. Veja o erro
+<!-- Descreva o problema -->
 
-### 🎯 Comportamento Esperado
-O que você esperava que acontecesse.
+## Como reproduzir?
 
-### 📸 Screenshots
-Se aplicável, adicione capturas de tela para ajudar a explicar o problema.
+<!-- Passos ou contexto para reproduzir -->
 
-### 🐧 Logs ou Erro do Console
-Se aplicável, cole aqui qualquer erro do console do navegador ou logs relevantes.
+## Logs / Screenshots
 
-### 💻 Ambiente
-- **OS:** (ex: Windows, macOS)
-- **Browser:** (ex: Chrome, Firefox)
-- **Contexto:** (ex: Mobile, Desktop)
-
-### 🔗 Referências Adicionais
-Adicione qualquer outro contexto sobre o problema aqui.
+<!-- Opcional: cole erros do console ou prints -->

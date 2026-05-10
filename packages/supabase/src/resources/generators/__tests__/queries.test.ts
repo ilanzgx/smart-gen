@@ -39,7 +39,7 @@ describe("generators.queries testes unitários", () => {
 
     // Assert
     expect(mockSupabase.from).toHaveBeenCalledWith("gerador");
-    expect(mockOrder).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(mockOrder).toHaveBeenCalledWith("created_at", { ascending: true });
     expect(sut).toEqual(mockData);
   });
 
