@@ -51,6 +51,7 @@ describe('OtaUpdateService testes unitários', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     globalThis.fetch = mockFetch
+    localStorage.clear()
     setEnvVars()
   })
 
@@ -124,9 +125,10 @@ describe('OtaUpdateService testes unitários', () => {
       expect(mockDownload).not.toHaveBeenCalled()
     })
 
-    it('deve retornar null se já estiver na versão mais recente', async () => {
+    it('deve retornar null e limpar pending_ota_version se já estiver na versão mais recente', async () => {
       const service = createServiceWithCapacitor()
       await service.initialize()
+      localStorage.setItem('pending_ota_version', 'abc123')
 
       mockFetchResponse({
         version: 'abc123',
@@ -141,11 +143,34 @@ describe('OtaUpdateService testes unitários', () => {
 
       expect(result).toBeNull()
       expect(mockDownload).not.toHaveBeenCalled()
+      expect(localStorage.getItem('pending_ota_version')).toBeNull()
       expect(logSpy).toHaveBeenCalledWith('[OTA]', 'Already on latest: abc123')
       logSpy.mockRestore()
     })
 
-    it('deve baixar bundle e retornar resultado quando há versão nova', async () => {
+    it('deve reconhecer versão via VITE_APP_VERSION quando bundle é builtin', async () => {
+      const service = createServiceWithCapacitor()
+      await service.initialize()
+      import.meta.env.VITE_APP_VERSION = 'sha-match'
+
+      mockFetchResponse({
+        version: 'sha-match',
+        bundleUrl: 'https://cdn/latest.zip',
+        checksum: 'sha-match',
+      })
+      mockCurrent.mockResolvedValueOnce({ bundle: {} }) // builtin → fallback VITE_APP_VERSION
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      const result = await service.checkForUpdate()
+
+      expect(result).toBeNull()
+      expect(mockDownload).not.toHaveBeenCalled()
+      expect(logSpy).toHaveBeenCalledWith('[OTA]', 'Already on latest: sha-match')
+      logSpy.mockRestore()
+    })
+
+    it('deve baixar bundle e retornar resultado quando há versão nova (não é first install)', async () => {
       const service = createServiceWithCapacitor()
       await service.initialize()
 
@@ -155,6 +180,7 @@ describe('OtaUpdateService testes unitários', () => {
         bundleUrl: 'https://cdn/latest.zip',
         checksum: 'v2.0',
       })
+      // current() retorna versão real → não é first install
       mockCurrent.mockResolvedValueOnce({ bundle: { version: 'v1.0' } })
       mockDownload.mockResolvedValueOnce(newBundle)
 
@@ -168,25 +194,85 @@ describe('OtaUpdateService testes unitários', () => {
       expect(mockSet).not.toHaveBeenCalled()
     })
 
-    it('deve baixar quando versão atual é builtin (bundle nunca foi setado)', async () => {
+    it('deve pular download se pending_ota_version no localStorage bate com versão remota', async () => {
       const service = createServiceWithCapacitor()
       await service.initialize()
 
+      localStorage.setItem('pending_ota_version', 'v2.0')
+
+      mockFetchResponse({
+        version: 'v2.0',
+        bundleUrl: 'https://cdn/latest.zip',
+        checksum: 'v2.0',
+      })
+      mockCurrent.mockResolvedValueOnce({ bundle: { version: 'v1.0' } })
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      const result = await service.checkForUpdate()
+
+      expect(result).toBeNull()
+      expect(mockDownload).not.toHaveBeenCalled()
+      expect(logSpy).toHaveBeenCalledWith('[OTA]', 'Update applied but awaiting Cold Start: v2.0')
+      logSpy.mockRestore()
+    })
+
+    it('deve baixar e aplicar silenciosamente no first install (builtin sem VITE_APP_VERSION)', async () => {
+      const service = createServiceWithCapacitor()
+      await service.initialize()
+      delete import.meta.env.VITE_APP_VERSION
+
+      const newBundle = { version: 'v1.0', id: 'first-bundle' } as any
       mockFetchResponse({
         version: 'v1.0',
         bundleUrl: 'https://cdn/latest.zip',
         checksum: 'v1.0',
       })
-      mockCurrent.mockResolvedValueOnce({ bundle: {} }) // sem version → 'builtin'
-
-      const newBundle = { version: 'v1.0' } as any
+      mockCurrent.mockResolvedValueOnce({ bundle: {} }) // builtin → isFirstInstall = true
       mockDownload.mockResolvedValueOnce(newBundle)
+      mockSet.mockResolvedValueOnce(undefined)
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       const result = await service.checkForUpdate()
 
-      expect(result).toEqual({ bundle: newBundle, version: 'v1.0' })
+      expect(result).toBeNull()
       expect(mockDownload).toHaveBeenCalled()
-      expect(mockSet).not.toHaveBeenCalled()
+      expect(mockSet).toHaveBeenCalledWith({ id: 'first-bundle' })
+      expect(logSpy).toHaveBeenCalledWith(
+        '[OTA]',
+        'First install detected. Preparing bundle for next boot silently.',
+      )
+      logSpy.mockRestore()
+    })
+
+    it('deve baixar e aplicar silenciosamente no first install (builtin com VITE_APP_VERSION diferente)', async () => {
+      const service = createServiceWithCapacitor()
+      await service.initialize()
+      import.meta.env.VITE_APP_VERSION = 'old-sha'
+
+      const newBundle = { version: 'new-sha', id: 'b1' } as any
+      mockFetchResponse({
+        version: 'new-sha',
+        bundleUrl: 'https://cdn/latest.zip',
+        checksum: 'new-sha',
+      })
+      mockCurrent.mockResolvedValueOnce({ bundle: {} }) // builtin → isFirstInstall = true
+      mockDownload.mockResolvedValueOnce(newBundle)
+      mockSet.mockResolvedValueOnce(undefined)
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      const result = await service.checkForUpdate()
+
+      expect(result).toBeNull()
+      expect(mockDownload).toHaveBeenCalled()
+      expect(mockSet).toHaveBeenCalledWith({ id: 'b1' })
+      expect(logSpy).toHaveBeenCalledWith(
+        '[OTA]',
+        'First install detected. Preparing bundle for next boot silently.',
+      )
+      logSpy.mockRestore()
     })
 
     it('deve retornar null e logar erro se download falhar', async () => {
@@ -213,7 +299,7 @@ describe('OtaUpdateService testes unitários', () => {
   })
 
   describe('applyUpdate', () => {
-    it('deve chamar set({ id }) e reload() com o bundle fornecido', async () => {
+    it('deve chamar set({ id }) e reload() e salvar no localStorage', async () => {
       const service = createServiceWithCapacitor()
       await service.initialize()
 
@@ -227,6 +313,7 @@ describe('OtaUpdateService testes unitários', () => {
 
       expect(mockSet).toHaveBeenCalledWith({ id: 'bundle-id' })
       expect(mockReload).toHaveBeenCalledOnce()
+      expect(localStorage.getItem('pending_ota_version')).toBe('v2.0')
       logSpy.mockRestore()
     })
 

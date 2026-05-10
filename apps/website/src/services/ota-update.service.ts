@@ -82,22 +82,21 @@ export class OtaUpdateService {
       const current = await this.updater.current()
       let currentVersion = current?.bundle?.version ?? 'builtin'
 
+      const isFirstInstall = currentVersion === 'builtin'
+
       if (currentVersion === 'builtin' && import.meta.env.VITE_APP_VERSION) {
         currentVersion = import.meta.env.VITE_APP_VERSION
       }
 
       if (currentVersion === versionInfo.version) {
         console.log(OTA_TAG, `Already on latest: ${currentVersion}`)
-        localStorage.removeItem('pending_ota_version') // Limpa o storage pois o update foi um sucesso
+        localStorage.removeItem('pending_ota_version')
         return null
       }
 
       const justAppliedVersion = localStorage.getItem('pending_ota_version')
       if (justAppliedVersion === versionInfo.version) {
-        console.log(
-          OTA_TAG,
-          `Update applied but awaiting Cold Start for version: ${versionInfo.version}`,
-        )
+        console.log(OTA_TAG, `Update applied but awaiting Cold Start: ${versionInfo.version}`)
         return null
       }
 
@@ -109,6 +108,12 @@ export class OtaUpdateService {
       })
 
       console.log(OTA_TAG, `Downloaded bundle: ${bundle.version}`)
+
+      if (isFirstInstall) {
+        console.log(OTA_TAG, 'First install detected. Preparing bundle for next boot silently.')
+        await this.updater.set({ id: bundle.id })
+        return null
+      }
 
       return { bundle, version: versionInfo.version }
     } catch (error) {
