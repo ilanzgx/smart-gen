@@ -42,6 +42,8 @@ function isOtaVersionResponse(data: unknown): data is OtaVersionResponse {
 export class OtaUpdateService {
   private updater: OtaUpdater | null = null
 
+  public isFirstInstall: boolean = false
+
   /**
    * @description Verifica se o app está rodando em ambiente nativo.
    * @returns {boolean} - True se estiver em ambiente nativo.
@@ -60,8 +62,13 @@ export class OtaUpdateService {
       const { CapacitorUpdater } = await import('@capgo/capacitor-updater')
       this.updater = CapacitorUpdater
 
-      await this.updater.notifyAppReady()
-      console.log(OTA_TAG, 'Plugin initialized, notifyAppReady sent')
+      const state = await this.updater.notifyAppReady()
+      console.log(OTA_TAG, 'Plugin initialized, notifyAppReady sent', state)
+
+      if (state?.bundle?.id === 'builtin') {
+        this.isFirstInstall = true
+        console.log(OTA_TAG, 'Marcado como primeira instalação (Built-in detectado).')
+      }
     } catch (error) {
       this.updater = null
       console.warn(OTA_TAG, 'Not running on native, skipping:', error)
@@ -82,9 +89,7 @@ export class OtaUpdateService {
       const current = await this.updater.current()
       let currentVersion = current?.bundle?.version ?? 'builtin'
 
-      const isFirstInstall = currentVersion === 'builtin'
-
-      if (currentVersion === 'builtin' && import.meta.env.VITE_APP_VERSION) {
+      if (this.isFirstInstall && import.meta.env.VITE_APP_VERSION) {
         currentVersion = import.meta.env.VITE_APP_VERSION
       }
 
@@ -109,7 +114,7 @@ export class OtaUpdateService {
 
       console.log(OTA_TAG, `Downloaded bundle: ${bundle.version}`)
 
-      if (isFirstInstall) {
+      if (this.isFirstInstall) {
         console.log(OTA_TAG, 'First install detected. Preparing bundle for next boot silently.')
         await this.updater.set({ id: bundle.id })
         return null
