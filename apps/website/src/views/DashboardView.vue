@@ -4,9 +4,7 @@ import { storeToRefs } from 'pinia'
 import { supabase } from '@/lib/supabase'
 import {
   getLastReadingByGeneratorId,
-  getGenerators,
   subscribeToGeneratorReadings,
-  type Generator,
   type Leitura,
 } from '@smart-gen/supabase'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
@@ -15,19 +13,17 @@ import WaterGauge from '@/components/WaterGauge.vue'
 import ThermometerGauge from '@/components/ThermometerGauge.vue'
 import DashboardLayout from '@/components/layouts/DashboardLayout.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { useGeneratorsStore } from '@/stores/generators.store'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui'
 import { Activity, Droplets, ThermometerSun } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 
-const name = computed(() => user.value?.user_metadata?.name)
+const generatorsStore = useGeneratorsStore()
+const { generators, selectedGeneratorId, selectedGenerator } = storeToRefs(generatorsStore)
 
-const generators = ref<Generator[]>([])
-const selectedGeneratorId = ref<string>('')
-const selectedGenerator = computed(
-  () => generators.value.find((g) => g.id === selectedGeneratorId.value) || null,
-)
+const name = computed(() => user.value?.user_metadata?.name)
 
 const lastWaterLevel = ref(0)
 const lastTemperature = ref(0)
@@ -95,15 +91,6 @@ const updateDashboardFromReading = (reading: {
   }
 }
 
-const getAllGenerators = async () => {
-  const response: Generator[] = await getGenerators(supabase)
-
-  if (response.length > 0) {
-    generators.value = response
-    selectedGeneratorId.value = response[0]!.id
-  }
-}
-
 const fetchDashboardData = async () => {
   if (!selectedGeneratorId.value) return
 
@@ -148,7 +135,7 @@ watch(
 )
 
 onMounted(async () => {
-  await getAllGenerators()
+  await generatorsStore.fetchGenerators()
 })
 
 onUnmounted(async () => {
@@ -194,7 +181,7 @@ const formattedLastSync = computed(() => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem v-for="generator in generators" :key="generator.id" :value="generator.id">
-                {{ generator.id }}
+                {{ generator.name }}
               </SelectItem>
             </SelectContent>
           </Select>
