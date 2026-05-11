@@ -165,18 +165,18 @@ const formattedLastSync = computed(() => {
   <DashboardLayout>
     <div class="w-full max-w-8xl mx-auto space-y-6 md:space-y-6 pb-8">
       <!-- Cabeçalho -->
-      <header class="mt-2 md:mt-4 space-y-1.5">
+      <header class="mt-2 md:mt-1 space-y-1.5">
         <h1
           class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100"
         >
-          👋 Olá, {{ name }}
+          Olá, {{ name }}
         </h1>
         <div
           class="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-500 font-medium"
         >
           <span>Gerenciando unidade</span>
           <Select v-model="selectedGeneratorId">
-            <SelectTrigger class="w-full sm:w-auto sm:min-w-70">
+            <SelectTrigger class="w-full sm:w-auto sm:min-w-70 bg-gray-100">
               <SelectValue placeholder="Selecione uma unidade" />
             </SelectTrigger>
             <SelectContent>
@@ -298,6 +298,7 @@ const formattedLastSync = computed(() => {
             :last-reading="lastReadingForCharts"
           />
         </div>
+
         <!-- Card de gráfico de nível de água -->
         <div class="bg-white dark:bg-slate-900 border rounded-2xl shadow-sm p-6 overflow-hidden">
           <h3 class="font-semibold text-lg text-slate-800 dark:text-slate-100 mb-6">

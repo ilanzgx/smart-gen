@@ -93,7 +93,9 @@ const handleGenerateReport = async () => {
       const xlsxBuffer = await generateReportXlsx(generator, readings, periodLabel)
 
       // Cria o blob e força o download no navegador
-      const blob = new Blob([xlsxBuffer as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const blob = new Blob([xlsxBuffer as BlobPart], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -131,7 +133,7 @@ const handleGenerateReport = async () => {
         <div class="space-y-2">
           <Label for="period-select">Período</Label>
           <Select v-model="selectedPeriod">
-            <SelectTrigger id="period-select" class="w-full">
+            <SelectTrigger id="period-select" class="w-full bg-gray-100">
               <SelectValue placeholder="Selecione o período" />
             </SelectTrigger>
             <SelectContent>
@@ -143,15 +145,15 @@ const handleGenerateReport = async () => {
         </div>
 
         <!-- Formato do Relatório -->
-        <div class="space-y-2">
+        <div class="space-y-4">
           <Label>Formato do relatório</Label>
           <RadioGroup v-model="selectedFormat" class="flex items-center gap-6">
             <div class="flex items-center gap-2">
-              <RadioGroupItem id="format-pdf" value="pdf" />
+              <RadioGroupItem class="bg-gray-100" id="format-pdf" value="pdf" />
               <Label for="format-pdf" class="font-normal cursor-pointer">PDF</Label>
             </div>
             <div class="flex items-center gap-2">
-              <RadioGroupItem id="format-xlsx" value="xlsx" />
+              <RadioGroupItem class="bg-gray-100" id="format-xlsx" value="xlsx" />
               <Label for="format-xlsx" class="font-normal cursor-pointer">XLSX</Label>
             </div>
           </RadioGroup>

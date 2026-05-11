@@ -9,11 +9,6 @@ import { MapPinOff } from 'lucide-vue-next'
     class="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 sm:p-8"
   >
     <div class="text-center max-w-md w-full flex flex-col items-center">
-      <!-- Icon/Illustration -->
-      <div class="mb-6 p-4 bg-slate-100 dark:bg-slate-900 rounded-full inline-flex border border-slate-200 dark:border-slate-800">
-        <MapPinOff class="w-12 h-12 text-slate-400 dark:text-slate-500" stroke-width="1.5" />
-      </div>
-
       <h1 class="text-7xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 mb-4">
         404
       </h1>

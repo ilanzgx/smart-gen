@@ -56,6 +56,6 @@ async function logout() {
         >
       </div>
     </div>
-    <Separator class="mb-0 md:mb-2" />
+    <Separator class="mb-0" />
   </header>
 </template>
