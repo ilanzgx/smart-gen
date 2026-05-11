@@ -1,6 +1,10 @@
 import { PDFDocument, StandardFonts, rgb, type Color } from "pdf-lib";
+import type { ReportGenerator, ReportReading } from "../../types";
 
-export async function generateReportPdf(): Promise<Uint8Array> {
+export async function generateReportPdf(
+  generator: ReportGenerator,
+  readings: ReportReading[],
+): Promise<Uint8Array> {
   const document = await PDFDocument.create();
   const font = await document.embedFont(StandardFonts.Helvetica);
 

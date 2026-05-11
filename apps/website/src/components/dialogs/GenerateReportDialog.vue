@@ -20,6 +20,14 @@ import {
   RadioGroupItem,
 } from '@/components/ui'
 import { useGeneratorsStore } from '@/stores/generators.store'
+import { supabase } from '@/lib/supabase'
+import {
+  getGeneratorById,
+  getReadingsByGeneratorId,
+  type Generator,
+  type Leitura,
+} from '@smart-gen/supabase'
+import { generateReportPdf } from '@smart-gen/reports'
 
 const props = defineProps<{
   open?: boolean
@@ -41,6 +49,37 @@ const periodOptions = [
   { value: '30d', label: 'Últimos 30 dias' },
   { value: '90d', label: 'Últimos 90 dias' },
 ]
+
+const handleGenerateReport = async () => {
+  try {
+    if (!selectedGenerator.value) return
+
+    // Coleta os dados
+    const generator = await getGeneratorById(supabase, selectedGenerator.value.id)
+    const readings = await getReadingsByGeneratorId(supabase, selectedGenerator.value.id)
+
+    // Envia para o pacote de relatórios e recebe de volta o arquivo Pdf em Uint8Array
+    const pdfBytes = await generateReportPdf(generator, readings)
+
+    // Cria o blob e força o download no navegador
+    const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+
+    const generatorNameForFile = generator.name ?? generator.id
+    link.download = `relatorio-${generatorNameForFile.replace(/\s+/g, '-').toLowerCase()}.pdf`
+
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    emit('update:open', false)
+  } catch (error: unknown) {
+    console.error('Erro ao gerar relatório:', error)
+  }
+}
 </script>
 
 <template>
@@ -91,7 +130,12 @@ const periodOptions = [
         <DialogClose as-child>
           <Button type="button" variant="outline">Cancelar</Button>
         </DialogClose>
-        <Button type="button" :disabled="!selectedGenerator" class="min-w-32.5">
+        <Button
+          type="button"
+          @click="handleGenerateReport"
+          :disabled="!selectedGenerator"
+          class="min-w-32.5"
+        >
           Gerar Relatório
         </Button>
       </DialogFooter>
