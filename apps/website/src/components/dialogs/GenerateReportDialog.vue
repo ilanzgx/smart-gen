@@ -22,7 +22,7 @@ import {
 import { useGeneratorsStore } from '@/stores/generators.store'
 import { supabase } from '@/lib/supabase'
 import { getGeneratorById, getReadingsByGeneratorId } from '@smart-gen/supabase'
-import { generateReportPdf } from '@smart-gen/reports'
+import { generateReportPdf, generateReportXlsx } from '@smart-gen/reports'
 
 const props = defineProps<{
   open?: boolean
@@ -69,8 +69,8 @@ const handleGenerateReport = async () => {
 
     const periodLabel = periodOptions.find((p) => p.value === selectedPeriod.value)?.label
 
-    // Envia para o pacote de relatórios e recebe de volta o arquivo Pdf em Uint8Array
     if (selectedFormat.value === 'pdf') {
+      // Envia para o pacote de relatórios e recebe de volta o arquivo Pdf em Uint8Array
       const pdfBytes = await generateReportPdf(generator, readings, periodLabel)
 
       // Cria o blob e força o download no navegador
@@ -81,6 +81,25 @@ const handleGenerateReport = async () => {
 
       const generatorNameForFile = generator.name ?? generator.id
       link.download = `relatorio-${generatorNameForFile.replace(/\s+/g, '-').toLowerCase()}.pdf`
+
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      emit('update:open', false)
+    } else if (selectedFormat.value === 'xlsx') {
+      // Envia para o pacote de relatórios e recebe de volta o arquivo Xlsx em ArrayBuffer
+      const xlsxBuffer = await generateReportXlsx(generator, readings, periodLabel)
+
+      // Cria o blob e força o download no navegador
+      const blob = new Blob([xlsxBuffer as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+
+      const generatorNameForFile = generator.name ?? generator.id
+      link.download = `relatorio-${generatorNameForFile.replace(/\s+/g, '-').toLowerCase()}.xlsx`
 
       document.body.appendChild(link)
       link.click()
