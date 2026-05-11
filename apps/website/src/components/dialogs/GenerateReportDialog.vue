@@ -21,12 +21,7 @@ import {
 } from '@/components/ui'
 import { useGeneratorsStore } from '@/stores/generators.store'
 import { supabase } from '@/lib/supabase'
-import {
-  getGeneratorById,
-  getReadingsByGeneratorId,
-  type Generator,
-  type Leitura,
-} from '@smart-gen/supabase'
+import { getGeneratorById, getReadingsByGeneratorId } from '@smart-gen/supabase'
 import { generateReportPdf } from '@smart-gen/reports'
 
 const props = defineProps<{
@@ -54,28 +49,46 @@ const handleGenerateReport = async () => {
   try {
     if (!selectedGenerator.value) return
 
-    // Coleta os dados
+    // Computa a data inicial com base no período selecionado
+    const now = new Date()
+    let startDate: Date | undefined
+
+    if (selectedPeriod.value === '24h') {
+      startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    } else if (selectedPeriod.value === '7d') {
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    } else if (selectedPeriod.value === '30d') {
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    } else if (selectedPeriod.value === '90d') {
+      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+    }
+
+    // Coleta os dados já filtrados no banco
     const generator = await getGeneratorById(supabase, selectedGenerator.value.id)
-    const readings = await getReadingsByGeneratorId(supabase, selectedGenerator.value.id)
+    const readings = await getReadingsByGeneratorId(supabase, selectedGenerator.value.id, startDate)
+
+    const periodLabel = periodOptions.find((p) => p.value === selectedPeriod.value)?.label
 
     // Envia para o pacote de relatórios e recebe de volta o arquivo Pdf em Uint8Array
-    const pdfBytes = await generateReportPdf(generator, readings)
+    if (selectedFormat.value === 'pdf') {
+      const pdfBytes = await generateReportPdf(generator, readings, periodLabel)
 
-    // Cria o blob e força o download no navegador
-    const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
+      // Cria o blob e força o download no navegador
+      const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
 
-    const generatorNameForFile = generator.name ?? generator.id
-    link.download = `relatorio-${generatorNameForFile.replace(/\s+/g, '-').toLowerCase()}.pdf`
+      const generatorNameForFile = generator.name ?? generator.id
+      link.download = `relatorio-${generatorNameForFile.replace(/\s+/g, '-').toLowerCase()}.pdf`
 
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
 
-    emit('update:open', false)
+      emit('update:open', false)
+    }
   } catch (error: unknown) {
     console.error('Erro ao gerar relatório:', error)
   }
