@@ -4,9 +4,7 @@ import { storeToRefs } from 'pinia'
 import { supabase } from '@/lib/supabase'
 import {
   getLastReadingByGeneratorId,
-  getGenerators,
   subscribeToGeneratorReadings,
-  type Generator,
   type Leitura,
 } from '@smart-gen/supabase'
 import TemperatureChart from '@/components/generators/TemperatureChart.vue'
@@ -15,19 +13,17 @@ import WaterGauge from '@/components/WaterGauge.vue'
 import ThermometerGauge from '@/components/ThermometerGauge.vue'
 import DashboardLayout from '@/components/layouts/DashboardLayout.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { useGeneratorsStore } from '@/stores/generators.store'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui'
 import { Activity, Droplets, ThermometerSun } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 
-const name = computed(() => user.value?.user_metadata?.name)
+const generatorsStore = useGeneratorsStore()
+const { generators, selectedGeneratorId, selectedGenerator } = storeToRefs(generatorsStore)
 
-const generators = ref<Generator[]>([])
-const selectedGeneratorId = ref<string>('')
-const selectedGenerator = computed(
-  () => generators.value.find((g) => g.id === selectedGeneratorId.value) || null,
-)
+const name = computed(() => user.value?.user_metadata?.name)
 
 const lastWaterLevel = ref(0)
 const lastTemperature = ref(0)
@@ -95,15 +91,6 @@ const updateDashboardFromReading = (reading: {
   }
 }
 
-const getAllGenerators = async () => {
-  const response: Generator[] = await getGenerators(supabase)
-
-  if (response.length > 0) {
-    generators.value = response
-    selectedGeneratorId.value = response[0]!.id
-  }
-}
-
 const fetchDashboardData = async () => {
   if (!selectedGeneratorId.value) return
 
@@ -148,7 +135,7 @@ watch(
 )
 
 onMounted(async () => {
-  await getAllGenerators()
+  await generatorsStore.fetchGenerators()
 })
 
 onUnmounted(async () => {
@@ -178,23 +165,23 @@ const formattedLastSync = computed(() => {
   <DashboardLayout>
     <div class="w-full max-w-8xl mx-auto space-y-6 md:space-y-6 pb-8">
       <!-- Cabeçalho -->
-      <header class="mt-2 md:mt-4 space-y-1.5">
+      <header class="mt-2 md:mt-1 space-y-1.5">
         <h1
           class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100"
         >
-          👋 Olá, {{ name }}
+          Olá, {{ name }}
         </h1>
         <div
           class="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-500 font-medium"
         >
           <span>Gerenciando unidade</span>
           <Select v-model="selectedGeneratorId">
-            <SelectTrigger class="w-full sm:w-auto sm:min-w-70">
+            <SelectTrigger class="w-full sm:w-auto sm:min-w-70 bg-gray-100">
               <SelectValue placeholder="Selecione uma unidade" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem v-for="generator in generators" :key="generator.id" :value="generator.id">
-                {{ generator.id }}
+                {{ generator.name }}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -311,6 +298,7 @@ const formattedLastSync = computed(() => {
             :last-reading="lastReadingForCharts"
           />
         </div>
+
         <!-- Card de gráfico de nível de água -->
         <div class="bg-white dark:bg-slate-900 border rounded-2xl shadow-sm p-6 overflow-hidden">
           <h3 class="font-semibold text-lg text-slate-800 dark:text-slate-100 mb-6">

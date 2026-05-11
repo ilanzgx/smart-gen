@@ -14,3 +14,6 @@ node_modules
 
 # Ignore coverage reports
 coverage/
+
+# Ignore PDF reports
+packages/reports/*.pdf

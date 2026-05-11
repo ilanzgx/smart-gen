@@ -7,7 +7,7 @@ import type { Leitura } from "./types";
  * @returns {Promise<Leitura[]>} - Dados de todas as leituras.
  */
 export const getReadings = async (
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<Leitura[]> => {
   const { data, error } = await supabase.from("registro").select("*");
 
@@ -24,7 +24,7 @@ export const getReadings = async (
  */
 export const getReadingById = async (
   supabase: SupabaseClient,
-  id: string
+  id: string,
 ): Promise<Leitura> => {
   const { data, error } = await supabase
     .from("registro")
@@ -45,12 +45,24 @@ export const getReadingById = async (
  */
 export const getReadingsByGeneratorId = async (
   supabase: SupabaseClient,
-  generatorId: string
+  generatorId: string,
+  startDate?: Date,
+  endDate?: Date,
 ): Promise<Leitura[]> => {
-  const { data, error } = await supabase
+  let query = supabase
     .from("registro")
     .select("*")
     .eq("gerador_id", generatorId);
+
+  if (startDate) {
+    query = query.gte("timestamp", startDate.toISOString());
+  }
+
+  if (endDate) {
+    query = query.lte("timestamp", endDate.toISOString());
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
 
@@ -65,7 +77,7 @@ export const getReadingsByGeneratorId = async (
  */
 export const getLastReadingByGeneratorId = async (
   supabase: SupabaseClient,
-  generatorId: string
+  generatorId: string,
 ): Promise<Leitura> => {
   const { data, error } = await supabase
     .from("registro")

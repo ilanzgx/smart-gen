@@ -12,7 +12,7 @@ const props = defineProps<{
 }>()
 const loading = ref(true)
 
-const timeFilter = ref(30)
+const timeFilter = ref(1)
 const allReadings = ref<Leitura[]>([])
 
 const filterOptions = [
@@ -131,11 +131,11 @@ watch(
         v-for="opt in filterOptions"
         :key="opt.value"
         @click="timeFilter = opt.value"
-        class="flex-1 sm:flex-none min-h-11 px-3 py-2 text-sm sm:text-xs font-medium rounded-md transition-colors cursor-pointer"
+        class="flex-1 sm:flex-none min-h-11 sm:min-h-9 px-4 sm:px-3 py-2 sm:py-1.5 text-sm sm:text-xs font-semibold rounded-lg transition-all duration-200 ease-in-out active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
         :class="
           timeFilter === opt.value
-            ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900'
-            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+            ? 'bg-slate-900 text-white shadow-md dark:bg-slate-100 dark:text-slate-900'
+            : 'bg-slate-200 text-slate-600  hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100'
         "
       >
         {{ opt.label }}

@@ -1,0 +1,22 @@
+{
+  "name": "@smart-gen/reports",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test:unit": "vitest run"
+  },
+  "devDependencies": {
+    "@smart-gen/tsconfig": "workspace:*",
+    "@types/node": "^24.12.2",
+    "vitest": "^4.1.2"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "pdf-lib": "^1.17.1"
+  }
+}

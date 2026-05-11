@@ -27,7 +27,7 @@ const isDarkMode = ref(false)
 
 <template>
   <Dialog :open="props.open" @update:open="(value) => emit('update:open', value)">
-    <DialogContent class="sm:max-w-106.25">
+    <DialogContent class="sm:max-w-106.25 md:max-w-xl">
       <DialogHeader>
         <DialogTitle class="text-xl font-bold">Configurações</DialogTitle>
         <DialogDescription class="text-slate-500 dark:text-slate-400">
@@ -45,7 +45,7 @@ const isDarkMode = ref(false)
           </h3>
 
           <div
-            class="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50"
+            class="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800"
           >
             <div class="flex items-center gap-3">
               <div

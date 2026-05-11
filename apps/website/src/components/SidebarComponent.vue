@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { House, Zap, Plus, Bell, Settings } from 'lucide-vue-next'
+import { House, Zap, Plus, Bell, Settings, FileDown } from 'lucide-vue-next'
 
 import CreateGeneratorDialog from '@/components/dialogs/CreateGeneratorDialog.vue'
 import SettingsDialog from '@/components/dialogs/SettingsDialog.vue'
+import GenerateReportDialog from '@/components/dialogs/GenerateReportDialog.vue'
 
 // Dialogs
 const createGeneratorDialogOpen = ref(false)
 const settingsDialogOpen = ref(false)
+const generateReportDialogOpen = ref(false)
 </script>
 
 <template>
@@ -37,7 +39,7 @@ const settingsDialogOpen = ref(false)
         <!-- Geradores -->
         <RouterLink
           to="/geradores"
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-0"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-6"
           active-class="bg-sky-100 !text-gray-900"
         >
           <Zap class="w-5 h-5 shrink-0 text-gray-600" />
@@ -46,7 +48,7 @@ const settingsDialogOpen = ref(false)
 
         <!-- Registrar Gerador -->
         <button
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-6 cursor-pointer"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full cursor-pointer"
           active-class="bg-sky-100 !text-gray-900"
           @click="createGeneratorDialogOpen = true"
         >
@@ -54,6 +56,17 @@ const settingsDialogOpen = ref(false)
           <span class="text-gray-900 font-semibold">Registrar Gerador</span>
         </button>
         <CreateGeneratorDialog v-model:open="createGeneratorDialogOpen" />
+
+        <!-- Gerar Relatório -->
+        <button
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-6 cursor-pointer"
+          active-class="bg-sky-100 !text-gray-900"
+          @click="generateReportDialogOpen = true"
+        >
+          <FileDown class="w-5 h-5 shrink-0 text-gray-600" />
+          <span class="text-gray-900 font-semibold">Gerar Relatório</span>
+        </button>
+        <GenerateReportDialog v-model:open="generateReportDialogOpen" />
 
         <!-- Alertas -->
         <RouterLink

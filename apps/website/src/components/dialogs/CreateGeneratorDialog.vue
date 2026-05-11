@@ -70,7 +70,7 @@ const onSubmit = handleSubmit(async (values) => {
 
 <template>
   <Dialog :open="props.open" @update:open="(value) => emit('update:open', value)">
-    <DialogContent class="sm:max-w-106.25">
+    <DialogContent class="sm:max-w-106.25 md:max-w-lg lg:max-w-xl">
       <DialogHeader>
         <DialogTitle class="text-xl font-bold">Registrar Gerador</DialogTitle>
         <DialogDescription class="text-gray-600 dark:text-slate-400">

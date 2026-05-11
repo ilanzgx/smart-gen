@@ -21,6 +21,7 @@
     "@fontsource/nunito-sans": "^5.2.7",
     "@smart-gen/shared": "workspace:*",
     "@smart-gen/supabase": "workspace:*",
+    "@smart-gen/reports": "workspace:*",
     "@tabler/icons-vue": "^3.41.1",
     "@tailwindcss/vite": "^4.2.2",
     "@vee-validate/zod": "^4.15.1",

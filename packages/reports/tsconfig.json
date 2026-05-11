@@ -1,0 +1,8 @@
+{
+  "extends": "@smart-gen/tsconfig/base.json",
+  "include": ["src/**/*"],
+  "compilerOptions": {
+    "types": ["node", "vitest"],
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+  },
+}
