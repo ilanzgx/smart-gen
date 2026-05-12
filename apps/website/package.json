@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest run",
@@ -17,11 +17,13 @@
   },
   "dependencies": {
     "@capacitor/core": "^8.3.1",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1",
     "@capgo/capacitor-updater": "^8.45.10",
     "@fontsource/nunito-sans": "^5.2.7",
+    "@smart-gen/reports": "workspace:*",
     "@smart-gen/shared": "workspace:*",
     "@smart-gen/supabase": "workspace:*",
-    "@smart-gen/reports": "workspace:*",
     "@tabler/icons-vue": "^3.41.1",
     "@tailwindcss/vite": "^4.2.2",
     "@vee-validate/zod": "^4.15.1",

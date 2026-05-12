@@ -23,6 +23,9 @@ import { useGeneratorsStore } from '@/stores/generators.store'
 import { supabase } from '@/lib/supabase'
 import { getGeneratorById, getReadingsByGeneratorId } from '@smart-gen/supabase'
 import { generateReportPdf, generateReportXlsx } from '@smart-gen/reports'
+import { Capacitor } from '@capacitor/core'
+import { Filesystem, Directory } from '@capacitor/filesystem'
+import { Share } from '@capacitor/share'
 
 const props = defineProps<{
   open?: boolean
@@ -45,6 +48,50 @@ const periodOptions = [
   { value: '90d', label: 'Últimos 90 dias' },
 ]
 
+// Conversor assíncrono otimizado
+const bufferToBase64 = (buffer: ArrayBuffer | Uint8Array): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([buffer as BlobPart])
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      const base64 = dataUrl.split(',')[1]
+      resolve(base64 as string)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+// Função utilitária para lidar com a exportação/download nos diferentes ambientes
+const exportFile = async (buffer: ArrayBuffer | Uint8Array, fileName: string, mimeType: string) => {
+  if (Capacitor.isNativePlatform()) {
+    const base64Data = await bufferToBase64(buffer)
+
+    const savedFile = await Filesystem.writeFile({
+      path: fileName,
+      data: base64Data,
+      directory: Directory.Cache,
+    })
+
+    await Share.share({
+      title: 'Relatório do Gerador',
+      url: savedFile.uri,
+    })
+  } else {
+    const blob = new Blob([buffer as BlobPart], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+}
+
 const handleGenerateReport = async () => {
   try {
     if (!selectedGenerator.value) return
@@ -53,63 +100,38 @@ const handleGenerateReport = async () => {
     const now = new Date()
     let startDate: Date | undefined
 
-    if (selectedPeriod.value === '24h') {
-      startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    } else if (selectedPeriod.value === '7d') {
-      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    } else if (selectedPeriod.value === '30d') {
-      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-    } else if (selectedPeriod.value === '90d') {
-      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+    const hoursMap: Record<string, number> = {
+      '24h': 24,
+      '7d': 7 * 24,
+      '30d': 30 * 24,
+      '90d': 90 * 24,
     }
 
-    // Coleta os dados já filtrados no banco
+    const hours = hoursMap[selectedPeriod.value]
+    if (hours !== undefined) {
+      startDate = new Date(now.getTime() - hours * 60 * 60 * 1000)
+    }
+
+    // Coleta os dados filtrados
     const generator = await getGeneratorById(supabase, selectedGenerator.value.id)
     const readings = await getReadingsByGeneratorId(supabase, selectedGenerator.value.id, startDate)
 
     const periodLabel = periodOptions.find((p) => p.value === selectedPeriod.value)?.label
+    const safeFileName = `relatorio-${(generator.name ?? generator.id).replace(/\s+/g, '-').toLowerCase()}`
 
     if (selectedFormat.value === 'pdf') {
-      // Envia para o pacote de relatórios e recebe de volta o arquivo Pdf em Uint8Array
       const pdfBytes = await generateReportPdf(generator, readings, periodLabel)
-
-      // Cria o blob e força o download no navegador
-      const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-
-      const generatorNameForFile = generator.name ?? generator.id
-      link.download = `relatorio-${generatorNameForFile.replace(/\s+/g, '-').toLowerCase()}.pdf`
-
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-      emit('update:open', false)
+      await exportFile(pdfBytes, `${safeFileName}.pdf`, 'application/pdf')
     } else if (selectedFormat.value === 'xlsx') {
-      // Envia para o pacote de relatórios e recebe de volta o arquivo Xlsx em ArrayBuffer
       const xlsxBuffer = await generateReportXlsx(generator, readings, periodLabel)
-
-      // Cria o blob e força o download no navegador
-      const blob = new Blob([xlsxBuffer as BlobPart], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-
-      const generatorNameForFile = generator.name ?? generator.id
-      link.download = `relatorio-${generatorNameForFile.replace(/\s+/g, '-').toLowerCase()}.xlsx`
-
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-      emit('update:open', false)
+      await exportFile(
+        xlsxBuffer,
+        `${safeFileName}.xlsx`,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      )
     }
+
+    emit('update:open', false)
   } catch (error: unknown) {
     console.error('Erro ao gerar relatório:', error)
   }
@@ -129,7 +151,6 @@ const handleGenerateReport = async () => {
       </DialogHeader>
 
       <div class="space-y-5 mt-2">
-        <!-- Seletor de Período -->
         <div class="space-y-2">
           <Label for="period-select">Período</Label>
           <Select v-model="selectedPeriod">
@@ -144,7 +165,6 @@ const handleGenerateReport = async () => {
           </Select>
         </div>
 
-        <!-- Formato do Relatório -->
         <div class="space-y-4">
           <Label>Formato do relatório</Label>
           <RadioGroup v-model="selectedFormat" class="flex items-center gap-6">
