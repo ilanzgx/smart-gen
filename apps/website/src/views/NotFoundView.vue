@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui'
-import { MapPinOff } from 'lucide-vue-next'
 </script>
 
 <template>
