@@ -5,110 +5,86 @@ import ThermometerGauge from '@/components/ThermometerGauge.vue'
 </script>
 
 <template>
-  <div class="min-h-screen">
-    <header
-      class="bg-white shadow-xl p-2 flex flex-wrap justify-between items-center mb-2 border border-gray-200 place-content-between"
-    >
-      <div class="md:pl-4">
-        <RouterLink to="/">
-          <img class="w-auto h-10" src="/images/logo.webp" alt="Logo" />
-        </RouterLink>
-      </div>
-
-      <nav class="mx-auto md:m-2 m-10 flex flex-wrap">
-        <RouterLink to="/login" class="bg-black m-1 p-2 text-white rounded-xl hover:bg-gray-700">
-          Fazer Login
-        </RouterLink>
-        <RouterLink
-          to="/register"
-          class="bg-orange-500 m-1 p-2 text-white rounded-xl hover:bg-orange-600"
-        >
-          Criar Conta
-        </RouterLink>
-      </nav>
-    </header>
-    <div
-      class="bg-white rounded-2xl shadow-xl p-8 mt-10 m-5 text-center max-w-2xl mx-auto border border-gray-200"
-    >
-      <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">
-        Soluções de monitoramento de geradores
-      </h2>
-      <div class="text-xl mb-5">
-        <p>Sem planilhas.</p>
-        <p>Sem visitas presenciais.</p>
-        <p>Visualize informação graficamente.</p>
-      </div>
-      <RouterLink
-        to="/register"
-        class="inline-block bg-orange-500 px-8 py-3 text-white font-medium rounded-xl hover:bg-orange-600 transition shadow-lg"
+  <div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2"
       >
-        Começar agora →
-      </RouterLink>
-    </div>
-    <main
-      class="border border-gray-200 bg-white shadow-xl rounded-xl p-8 max-w-5xl items-center justify-center mx-auto my-10"
-    >
-      <h1 class="text-2xl font-bold">Quem somos?</h1>
-      <section class="text-xl flex flex-col gap-5">
-        <p>
-          Na Smart Gen, acreditamos que a inteligência não está apenas nos grandes datacenters, mas
-          sim nos pequenos gestos de cuidado com cada máquina que mantém o mundo em movimento. Somos
-          uma empresa focada em soluções IoT personalizadas para geradores, unindo hardware
-          inteligente e software de fácil utilização para levar mais controle, eficiência e
-          tranquilidade a quem depende da geração de energia.
-        </p>
-        <p>
-          Hoje, nossa missão é clara: proteger o coração do seu negócio, o gerador, com
-          monitoramento essencial e preciso. Por isso, oferecemos um sistema que já acompanha em
-          tempo real dois dos parâmetros mais críticos para o bom funcionamento e longevidade do
-          equipamento: Nível de água (para controle do sistema de arrefecimento) Temperatura de
-          operação (prevenindo superaquecimento e falhas) E para que você não precise ser um
-          especialista em tecnologia para entender o que acontece com seu gerador, desenvolvemos um
-          dashboard intuitivo e visual, onde todos os dados são apresentados de forma clara, com
-          gráficos dinâmicos e indicadores de fácil leitura.
-        </p>
-        Na prática, você consegue, com poucos cliques, visualizar tendências de temperatura,
-        detectar variações anormais no nível de água e tomar decisões rápidas — direto da tela do
-        seu computador ou tablet. Quer ver na prática? Logo abaixo, você confere uma demonstração
-        interativa do nosso dashboard, mostrando como é simples acompanhar a saúde do seu gerador em
-        tempo real. E estamos evoluindo. Em breve, a Smart Gen dará mais um passo importante na
-        democratização dos dados industriais: disponibilizaremos a exportação completa dos registros
-        em formato CSV.
-        <p>
-          Isso significa que você poderá analisar históricos, criar relatórios personalizados,
-          integrar com outras ferramentas de gestão e levar a análise dos dados para onde preferir.
-          Somos uma equipe apaixonada por tecnologia que resolve problemas do mundo real. Não
-          entregamos apenas sensores; entregamos autonomia, previsibilidade e a confiança de que seu
-          gerador está sob o olhar atento de um parceiro inteligente.
-        </p>
-      </section>
-      <h1 class="text-2xl font-bold">Soluções personalizadas</h1>
-      <div class="text-xl">
-        <p>Na smartgen temos soluções personalizadas que simplifica a visualização dos dados.</p>
-        <div class="flex flex-wrap place-content-center">
-          <div class="border border-gray-200 p-2 m-1 rounded-lg flex flex-col w-65">
-            <span>Visualizador de água</span>
-            <WaterGauge :value="50" class="w-25 h-25 m-2"></WaterGauge>
+        <RouterLink to="/" aria-label="Ir para a página inicial" class="shrink-0">
+          <img class="h-8 w-auto" src="/images/logo.webp" alt="Logo Smart Gen" />
+        </RouterLink>
+
+        <nav
+          aria-label="Navegação Principal"
+          class="flex items-center gap-2 sm:gap-3"
+        >
+          <RouterLink
+            to="/login"
+            class="px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold rounded-xl bg-slate-100 text-slate-900 hover:bg-slate-200 transition-all active:scale-95 text-center whitespace-nowrap"
+          >
+            Entrar
+          </RouterLink>
+          <RouterLink
+            to="/register"
+            class="px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition-all active:scale-95 text-center whitespace-nowrap"
+          >
+            Criar Conta
+          </RouterLink>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-32">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <!-- Left: Text + CTA -->
+        <div>
+          <h1
+            class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-tight mb-6"
+          >
+            Monitoramento de geradores em tempo real
+          </h1>
+          <p class="text-lg text-slate-600 mb-10 max-w-lg leading-relaxed">
+            Sensores IoT no seu gerador transmitem temperatura e nível de água para a nuvem.
+            Acompanhe tudo pelo dashboard — sem planilhas, sem visitas presenciais.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <RouterLink
+              to="/register"
+              class="px-8 py-4 text-sm font-bold text-white bg-orange-600 rounded-xl hover:bg-orange-700 transition-all active:scale-95 text-center shadow-lg shadow-orange-600/20"
+            >
+              Começar agora
+            </RouterLink>
+            <RouterLink
+              to="/contato"
+              class="px-8 py-4 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all active:scale-95 text-center"
+            >
+              Entrar em Contato
+            </RouterLink>
           </div>
-          <div class="border border-gray-200 p-2 m-1 rounded-lg flex flex-col w-65">
-            <span>Visualizador de temperatura</span>
-            <ThermometerGauge :value="50" class="w-35 h-35"></ThermometerGauge>
+        </div>
+
+        <!-- Right: Gauges -->
+        <div class="flex justify-center lg:justify-end">
+          <div class="grid grid-cols-2 gap-6 max-w-sm w-full">
+            <div
+              class="border border-slate-100 rounded-3xl p-6 flex flex-col items-center gap-2 bg-white shadow-sm"
+            >
+              <span class="text-sm font-semibold text-slate-500">Nível de água</span>
+              <WaterGauge :value="50" class="w-24 h-24" />
+              <p class="text-xs font-medium text-slate-400">Arrefecimento</p>
+            </div>
+            <div
+              class="border border-slate-100 rounded-3xl p-6 flex flex-col items-center gap-2 bg-white shadow-sm"
+            >
+              <span class="text-sm font-semibold text-slate-500">Temperatura</span>
+              <ThermometerGauge :value="50" class="w-24 h-24" />
+              <p class="text-xs font-medium text-slate-400">Superaquecimento</p>
+            </div>
           </div>
         </div>
       </div>
-    </main>
+    </section>
   </div>
-
-  <footer
-    class="bg-white border-t border-gray-100 py-4 text-center text-sm text-gray-400 mt-5 flex flex-wrap gap-5 justify-center"
-  >
-    <span>Smart gen&trade;</span>
-    <a class="underline">sobre nós</a>
-  </footer>
 </template>
-
-<style>
-section {
-  margin-bottom: 10px;
-}
-</style>
