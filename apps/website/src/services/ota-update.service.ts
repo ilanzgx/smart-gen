@@ -10,6 +10,7 @@
  */
 
 import type { CapacitorUpdaterPlugin, BundleInfo } from '@capgo/capacitor-updater'
+import { Capacitor } from '@capacitor/core'
 
 interface OtaVersionResponse {
   version: string
@@ -56,7 +57,7 @@ export class OtaUpdateService {
    * @description Inicializa o plugin OTA e notifica que o bundle atual está OK.
    */
   async initialize(): Promise<void> {
-    if (typeof window === 'undefined' || !('Capacitor' in window)) return
+    if (!Capacitor.isNativePlatform()) return
 
     try {
       const { CapacitorUpdater } = await import('@capgo/capacitor-updater')

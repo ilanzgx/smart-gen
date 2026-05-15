@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { Capacitor } from '@capacitor/core'
 import { OtaUpdateService } from '../ota-update.service'
 
 const mockNotifyAppReady = vi.fn().mockResolvedValue({ bundle: { version: '1.0' } })
@@ -17,16 +18,21 @@ vi.mock('@capgo/capacitor-updater', () => ({
   },
 }))
 
+vi.mock('@capacitor/core', () => ({
+  Capacitor: {
+    isNativePlatform: vi.fn().mockReturnValue(true),
+  },
+}))
+
 const mockFetch = vi.fn()
 
 function createServiceWithCapacitor(): OtaUpdateService {
-  Object.defineProperty(globalThis, 'window', { value: globalThis, writable: true })
-  Object.defineProperty(globalThis, 'Capacitor', { value: {}, writable: true, configurable: true })
+  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
   return new OtaUpdateService()
 }
 
 function cleanupCapacitor(): void {
-  delete (globalThis as Record<string, unknown>).Capacitor
+  // no-op
 }
 
 function setEnvVars(url = 'https://test.supabase.co', key = 'test-anon-key'): void {
@@ -90,8 +96,9 @@ describe('OtaUpdateService testes unitários', () => {
   // ─── initialize ─────────────────────────────────────────────────────────────
 
   describe('initialize', () => {
-    it('deve pular inicialização quando window não tem Capacitor', async () => {
+    it('deve pular inicialização quando não for plataforma nativa', async () => {
       // Arrange
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValueOnce(false)
       const service = new OtaUpdateService()
 
       // Act
