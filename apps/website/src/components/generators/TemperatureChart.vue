@@ -12,15 +12,24 @@ const props = defineProps<{
 }>()
 const loading = ref(true)
 
-const timeFilter = ref(1)
+type TimeFilter = 1 | 7 | 30 | 365
+
+const timeFilter = ref<TimeFilter>(1)
 const allReadings = ref<Leitura[]>([])
 
-const filterOptions = [
+const filterOptions: { label: string; value: TimeFilter }[] = [
   { label: '24h', value: 1 },
   { label: '7d', value: 7 },
   { label: '30d', value: 30 },
   { label: '1a', value: 365 },
 ]
+
+const formatConfig: Record<TimeFilter, { xFormat: string; tooltipFormat: string }> = {
+  1: { xFormat: 'HH:mm', tooltipFormat: 'dd MMM, HH:mm' },
+  7: { xFormat: 'dd/MM', tooltipFormat: 'dd MMM, HH:mm' },
+  30: { xFormat: 'dd/MM', tooltipFormat: 'dd MMM, HH:mm' },
+  365: { xFormat: 'MMM yyyy', tooltipFormat: 'dd MMM yyyy' },
+}
 
 const filteredReadings = computed(() => {
   const cutoff = new Date()
@@ -42,50 +51,54 @@ const series = computed<ApexAxisChartSeries>(() => [
   },
 ])
 
-const chartOptions: ApexOptions = {
-  chart: {
-    type: 'area',
-    toolbar: { show: false },
-    zoom: { enabled: false },
-  },
-  stroke: {
-    curve: 'smooth',
-    width: 2,
-  },
-  fill: {
-    type: 'gradient',
-    gradient: {
-      shadeIntensity: 1,
-      opacityFrom: 0.4,
-      opacityTo: 0.02,
-      stops: [0, 100],
+const chartOptions = computed<ApexOptions>(() => {
+  const { xFormat, tooltipFormat } = formatConfig[timeFilter.value]
+
+  return {
+    chart: {
+      type: 'area',
+      toolbar: { show: false },
+      zoom: { enabled: false },
     },
-  },
-  dataLabels: { enabled: false },
-  xaxis: {
-    type: 'datetime',
-    labels: {
-      datetimeUTC: false,
-      format: 'dd/MM HH:mm',
+    stroke: {
+      curve: 'smooth',
+      width: 2,
     },
-  },
-  yaxis: {
-    min: 0,
-    max: 120,
-    title: { text: '°C' },
-    labels: {
-      formatter: (v) => `${v.toFixed(0)}°C`,
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.4,
+        opacityTo: 0.02,
+        stops: [0, 100],
+      },
     },
-  },
-  tooltip: {
-    x: { format: 'dd MMM, HH:mm' },
-    y: { formatter: (v) => `${v.toFixed(1)} °C` },
-  },
-  colors: ['#ef4444'],
-  grid: {
-    borderColor: '#f1f5f9',
-  },
-}
+    dataLabels: { enabled: false },
+    xaxis: {
+      type: 'datetime',
+      labels: {
+        datetimeUTC: false,
+        format: xFormat,
+      },
+    },
+    yaxis: {
+      min: 0,
+      max: 120,
+      title: { text: '°C' },
+      labels: {
+        formatter: (v) => `${v.toFixed(0)}°C`,
+      },
+    },
+    tooltip: {
+      x: { format: tooltipFormat },
+      y: { formatter: (v) => `${v.toFixed(1)} °C` },
+    },
+    colors: ['#ef4444'],
+    grid: {
+      borderColor: '#f1f5f9',
+    },
+  }
+})
 
 onMounted(async () => {
   try {
