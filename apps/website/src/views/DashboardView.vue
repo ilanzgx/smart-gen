@@ -30,6 +30,7 @@ const lastTemperature = ref(0)
 const lastTimestamp = ref<string | null>(null)
 const lastReadingForCharts = ref<Leitura | null>(null)
 const isOperating = ref(false)
+const isSwitchingChannel = ref(true)
 
 let unsubscribeRealtime: (() => Promise<void>) | null = null
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -62,6 +63,13 @@ const setupRealtime = async () => {
       () => {
         console.log('[Dashboard] Canal reconectado, atualizando dados...')
         fetchDashboardData()
+      },
+      // Callback de conexão inicial
+      (success) => {
+        if (!success) {
+          console.warn('[Dashboard] Falha ao conectar no canal realtime.')
+        }
+        isSwitchingChannel.value = false
       },
     )
     unsubscribeRealtime = unsubscribe
@@ -126,8 +134,12 @@ watch(
   () => selectedGeneratorId.value,
   async (newId, oldId) => {
     if (newId === oldId) return
-    if (!newId) return
+    if (!newId) {
+      isSwitchingChannel.value = false
+      return
+    }
 
+    isSwitchingChannel.value = true
     await fetchDashboardData()
     setupRealtime()
   },
@@ -175,7 +187,7 @@ const formattedLastSync = computed(() => {
           class="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-500 font-medium"
         >
           <span>Gerenciando unidade</span>
-          <Select v-model="selectedGeneratorId">
+          <Select v-model="selectedGeneratorId" :disabled="isSwitchingChannel">
             <SelectTrigger class="w-full sm:w-auto sm:min-w-70 bg-gray-100">
               <SelectValue placeholder="Selecione uma unidade" />
             </SelectTrigger>

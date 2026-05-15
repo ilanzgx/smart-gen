@@ -18,7 +18,10 @@ describe("readings.service testes unitários", () => {
       topic: "realtime:registro-gerador-test-id",
       on: vi.fn().mockImplementation((event, filter, callback) => {
         if (event === "postgres_changes") {
-          postgresChangeHandler = callback as (payload: { new: unknown; old: unknown }) => void;
+          postgresChangeHandler = callback as (payload: {
+            new: unknown;
+            old: unknown;
+          }) => void;
         }
         return mockChannel;
       }),
@@ -42,7 +45,9 @@ describe("readings.service testes unitários", () => {
     subscribeToGeneratorReadings(mockSupabase, "test-id", () => {});
 
     // Assert
-    expect(mockSupabase.channel).toHaveBeenCalledWith("registro-gerador-test-id");
+    expect(mockSupabase.channel).toHaveBeenCalledWith(
+      "registro-gerador-test-id",
+    );
   });
 
   it("deve configurar postgres_changes com parâmetros corretos", () => {
@@ -84,7 +89,11 @@ describe("readings.service testes unitários", () => {
 
   it("deve retornar objeto com função unsubscribe", () => {
     // Arrange & Act
-    const { unsubscribe } = subscribeToGeneratorReadings(mockSupabase, "test-id", () => {});
+    const { unsubscribe } = subscribeToGeneratorReadings(
+      mockSupabase,
+      "test-id",
+      () => {},
+    );
 
     // Assert
     expect(typeof unsubscribe).toBe("function");
@@ -92,7 +101,11 @@ describe("readings.service testes unitários", () => {
 
   it("deve chamar removeChannel quando unsubscribe chamado", async () => {
     // Arrange
-    const { unsubscribe } = subscribeToGeneratorReadings(mockSupabase, "test-id", () => {});
+    const { unsubscribe } = subscribeToGeneratorReadings(
+      mockSupabase,
+      "test-id",
+      () => {},
+    );
 
     // Act
     await unsubscribe();
@@ -105,7 +118,11 @@ describe("readings.service testes unitários", () => {
     // Arrange
     vi.useFakeTimers();
 
-    const { unsubscribe } = subscribeToGeneratorReadings(mockSupabase, "test-id", () => {});
+    const { unsubscribe } = subscribeToGeneratorReadings(
+      mockSupabase,
+      "test-id",
+      () => {},
+    );
 
     // Act
     channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
@@ -151,7 +168,11 @@ describe("readings.service testes unitários", () => {
     // Arrange
     vi.useFakeTimers();
 
-    const { unsubscribe } = subscribeToGeneratorReadings(mockSupabase, "test-id", () => {});
+    const { unsubscribe } = subscribeToGeneratorReadings(
+      mockSupabase,
+      "test-id",
+      () => {},
+    );
 
     // Força erro para criar timeout
     channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
@@ -173,7 +194,12 @@ describe("readings.service testes unitários", () => {
     // Arrange
     const mockOnSubscribed = vi.fn();
 
-    subscribeToGeneratorReadings(mockSupabase, "test-id", () => {}, mockOnSubscribed);
+    subscribeToGeneratorReadings(
+      mockSupabase,
+      "test-id",
+      () => {},
+      mockOnSubscribed,
+    );
 
     // Act - primeira conexão
     channelSubscribeCallback("SUBSCRIBED");
@@ -186,5 +212,52 @@ describe("readings.service testes unitários", () => {
 
     // Assert - deve chamar em reconexão
     expect(mockOnSubscribed).toHaveBeenCalledTimes(1);
+  });
+
+  it("deve chamar onInitialSubscribe na conexão inicial com true", () => {
+    // Arrange
+    const mockOnInitial = vi.fn();
+
+    // Act
+    subscribeToGeneratorReadings(
+      mockSupabase,
+      "test-id",
+      () => {},
+      undefined,
+      mockOnInitial,
+    );
+
+    channelSubscribeCallback("SUBSCRIBED");
+
+    // Assert
+    expect(mockOnInitial).toHaveBeenCalledWith(true);
+    expect(mockOnInitial).toHaveBeenCalledTimes(1);
+  });
+
+  it("deve chamar onInitialSubscribe com false se exceder tentativas", async () => {
+    // Arrange
+    vi.useFakeTimers();
+    const mockOnInitial = vi.fn();
+
+    // Act
+    const { unsubscribe } = subscribeToGeneratorReadings(
+      mockSupabase,
+      "test-id",
+      () => {},
+      undefined,
+      mockOnInitial,
+    );
+
+    // Act
+    for (let i = 0; i <= 3; i++) {
+      channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
+      await vi.advanceTimersByTimeAsync(1000);
+    }
+
+    // Assert
+    expect(mockOnInitial).toHaveBeenCalledWith(false);
+
+    vi.useRealTimers();
+    await unsubscribe();
   });
 });
