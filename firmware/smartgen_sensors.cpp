@@ -7,10 +7,12 @@
  * @param triggerPin - Pino do trigger
  * @param echoPin - Pino do echo (entrada)
  */
-SmartGenSensors::SmartGenSensors(int oneWirePin, int triggerPin, int echoPin)
+SmartGenSensors::SmartGenSensors(int oneWirePin, int triggerPin, int echoPin, float emptyDistanceCm, float fullDistanceCm)
   : _oneWirePin(oneWirePin),
     _triggerPin(triggerPin),
     _echoPin(echoPin),
+    _emptyDistanceCm(emptyDistanceCm),
+    _fullDistanceCm(fullDistanceCm),
     _oneWire(oneWirePin),
     _sensors(&_oneWire) {}
 
@@ -57,5 +59,19 @@ float SmartGenSensors::getWaterLevel()
 
   float distanceCm = duration * 0.0343 / 2.0;
 
-  return distanceCm;
+  if(distanceCm >= _emptyDistanceCm || distanceCm <= 0) {
+    Serial.printf("distanceCm %0.2f >= _emptyDistanceCm %0.2f\n", distanceCm, _emptyDistanceCm);
+    return 0.0;
+  }
+
+  if(distanceCm <= _fullDistanceCm) {
+    return 100.0;
+  }
+
+  float usableHeight = _emptyDistanceCm - _fullDistanceCm;
+  float currentWaterHeight = _emptyDistanceCm - distanceCm;
+
+  float percentage = (currentWaterHeight / usableHeight) * 100.0;
+
+  return percentage;
 }

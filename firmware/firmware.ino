@@ -13,9 +13,12 @@
 #define TRIGGER_PIN          (25)
 #define ECHO_PIN             (35)
 
+#define EMPTY_DISTANCE       (13.35)
+#define FULL_DISTANCE        (2)
+
 SmartGenWifi smartGenWifi;
 SmartGenSupabase smartGenSupabase(supabaseUrl, supabaseKey);
-SmartGenSensors smartGenSensors(ONE_WIRE_BUS, TRIGGER_PIN, ECHO_PIN);
+SmartGenSensors smartGenSensors(ONE_WIRE_BUS, TRIGGER_PIN, ECHO_PIN, EMPTY_DISTANCE, FULL_DISTANCE);
 
 unsigned long lastTime = 0;
 const unsigned long timerDelay = MINUTES(5);
@@ -29,6 +32,9 @@ void setup() {
 }
 
 void loop() {
+  Serial.printf("%0.2f\n", smartGenSensors.getWaterLevel());
+  delay(SECONDS(1));
+
   if((millis() - lastTime) > timerDelay) {
     lastTime = millis();
 
