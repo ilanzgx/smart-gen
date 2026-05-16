@@ -35,6 +35,9 @@ const isSwitchingChannel = ref(true)
 const waterLevelDelta = ref<number | null>(null)
 const temperatureDelta = ref<number | null>(null)
 
+const isUpdatingData = ref(false)
+let updateTimer: ReturnType<typeof setTimeout> | null = null
+
 let unsubscribeRealtime: (() => Promise<void>) | null = null
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -100,6 +103,12 @@ const updateDashboardFromReading = (reading: {
   lastTemperature.value = reading.temperatura ?? 0
   lastTimestamp.value = reading.timestamp ?? null
   lastReadingForCharts.value = reading as Leitura
+
+  isUpdatingData.value = true
+  if (updateTimer) clearTimeout(updateTimer)
+  updateTimer = setTimeout(() => {
+    isUpdatingData.value = false
+  }, 500)
 
   if (reading.timestamp) {
     const readingTime = new Date(reading.timestamp).getTime()
@@ -168,6 +177,9 @@ onMounted(async () => {
 onUnmounted(async () => {
   if (debounceTimer) {
     clearTimeout(debounceTimer)
+  }
+  if (updateTimer) {
+    clearTimeout(updateTimer)
   }
 
   if (unsubscribeRealtime) {
@@ -273,7 +285,16 @@ const formattedLastSync = computed(() => {
             </div>
             <div class="mt-auto">
               <span
-                class="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center"
+                class="text-3xl font-bold tracking-tight flex items-center transition-colors duration-500"
+                :class="
+                  isUpdatingData && temperatureDelta !== null
+                    ? temperatureDelta > 0
+                      ? 'text-emerald-500'
+                      : temperatureDelta < 0
+                        ? 'text-red-500'
+                        : 'text-slate-400'
+                    : 'text-slate-800 dark:text-slate-100'
+                "
               >
                 {{ lastTemperature.toFixed(1)
                 }}<span class="text-lg text-slate-400 font-semibold ml-1">°C</span>
@@ -282,9 +303,9 @@ const formattedLastSync = computed(() => {
                   class="ml-3 text-sm font-medium flex items-center"
                   :class="
                     temperatureDelta > 0
-                      ? 'text-red-500'
+                      ? 'text-emerald-500'
                       : temperatureDelta < 0
-                        ? 'text-emerald-500'
+                        ? 'text-red-500'
                         : 'text-slate-400'
                   "
                 >
@@ -315,7 +336,16 @@ const formattedLastSync = computed(() => {
             </div>
             <div class="mt-auto">
               <span
-                class="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center"
+                class="text-3xl font-bold tracking-tight flex items-center transition-colors duration-500"
+                :class="
+                  isUpdatingData && waterLevelDelta !== null
+                    ? waterLevelDelta > 0
+                      ? 'text-emerald-500'
+                      : waterLevelDelta < 0
+                        ? 'text-red-500'
+                        : 'text-slate-400'
+                    : 'text-slate-800 dark:text-slate-100'
+                "
               >
                 {{ lastWaterLevel.toFixed(1)
                 }}<span class="text-lg text-slate-400 font-semibold ml-1">%</span>
