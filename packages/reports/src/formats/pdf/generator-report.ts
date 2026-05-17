@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
 import type { ReportGenerator, ReportReading } from "../../types";
 
 const TEMP_CRITICA = 40; // °C
@@ -66,6 +66,171 @@ function groupReadingsByDay(readings: ReportReading[]): DaySummary[] {
 }
 
 /**
+ * Quebra um texto em linhas respeitando a largura máxima disponível.
+ * @param text - Texto a ser quebrado.
+ * @param font - Fonte a ser usada.
+ * @param fontSize - Tamanho da fonte.
+ * @param maxWidth - Largura máxima disponível.
+ * @returns Array de linhas.
+ */
+function wrapText(
+  text: string,
+  font: PDFFont,
+  fontSize: number,
+  maxWidth: number,
+): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+    if (testWidth > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
+/**
+ * Renderiza a seção de diagnóstico gerado por IA no PDF.
+ * Trata markdown bold (**texto**), quebra de parágrafos e word-wrap.
+ * @param resume - Resumo do diagnóstico.
+ * @param provider - Provedor do diagnóstico.
+ * @param page - Página do PDF.
+ * @param document - Documento PDF.
+ * @param fontBold - Fonte bold.
+ * @param fontRegular - Fonte regular.
+ * @param colorBlue - Cor azul.
+ * @param colorDarkGray - Cor cinza escuro.
+ * @param colorGray - Cor cinza.
+ * @param margin - Margem.
+ * @param pageWidth - Largura da página.
+ * @param pageHeight - Altura da página.
+ * @param getCursorY - Função para obter a posição Y do cursor.
+ * @param setCursorY - Função para definir a posição Y do cursor.
+ * @param checkPageBreak - Função para verificar a quebra de página.
+ * @param setPage - Função para definir a página.
+ * @returns Void.
+ */
+function drawDiagnosticSection(
+  resume: string,
+  provider: string | undefined,
+  page: ReturnType<PDFDocument["addPage"]>,
+  document: PDFDocument,
+  fontBold: PDFFont,
+  fontRegular: PDFFont,
+  colorBlue: ReturnType<typeof rgb>,
+  colorDarkGray: ReturnType<typeof rgb>,
+  colorGray: ReturnType<typeof rgb>,
+  margin: number,
+  pageWidth: number,
+  pageHeight: number,
+  getCursorY: () => number,
+  setCursorY: (v: number) => void,
+  checkPageBreak: (space: number) => boolean,
+  setPage: (p: ReturnType<PDFDocument["addPage"]>) => void,
+): void {
+  let currentPage = page;
+  const maxTextWidth = pageWidth - margin * 2;
+  const fontSize = 9;
+  const lineHeight = 14;
+  const paragraphSpacing = 10;
+
+  const ensureSpace = (needed: number) => {
+    if (getCursorY() - needed < margin + 20) {
+      currentPage = document.addPage();
+      setPage(currentPage);
+      setCursorY(pageHeight - margin);
+    }
+  };
+
+  // Título da seção
+  ensureSpace(30);
+  currentPage.drawText("Diagnóstico Inteligente (IA)", {
+    font: fontBold,
+    size: 13,
+    color: colorBlue,
+    x: margin,
+    y: getCursorY(),
+  });
+
+  if (provider) {
+    const titleWidth = fontBold.widthOfTextAtSize(
+      "Diagnóstico Inteligente (IA)",
+      13,
+    );
+    currentPage.drawText(`  via ${provider}`, {
+      font: fontRegular,
+      size: 9,
+      color: colorGray,
+      x: margin + titleWidth + 4,
+      y: getCursorY() + 2,
+    });
+  }
+
+  setCursorY(getCursorY() - 8);
+
+  currentPage.drawLine({
+    start: { x: margin, y: getCursorY() },
+    end: { x: pageWidth - margin, y: getCursorY() },
+    thickness: 0.3,
+    color: colorGray,
+  });
+  setCursorY(getCursorY() - 16);
+
+  // Divide por parágrafos (\n\n ou \n)
+  const paragraphs = resume.split(/\n{2,}|\n/).filter((p) => p.trim());
+
+  for (const paragraph of paragraphs) {
+    // Remove markdown bold markers
+    const cleanText = paragraph.replace(/\*\*/g, "").trim();
+    if (!cleanText) continue;
+
+    // Detecta se é um titulo (era bold no markdown inteiro)
+    const isBoldParagraph =
+      paragraph.trim().startsWith("**") && paragraph.trim().endsWith("**");
+
+    const font = isBoldParagraph ? fontBold : fontRegular;
+    const size = isBoldParagraph ? 10 : fontSize;
+    const color = isBoldParagraph ? colorDarkGray : colorDarkGray;
+
+    const lines = wrapText(cleanText, font, size, maxTextWidth);
+
+    for (const line of lines) {
+      ensureSpace(lineHeight);
+      currentPage.drawText(line, {
+        font,
+        size,
+        color,
+        x: margin,
+        y: getCursorY(),
+      });
+      setCursorY(getCursorY() - lineHeight);
+    }
+
+    setCursorY(getCursorY() - paragraphSpacing);
+  }
+
+  // Separador final antes da seção de resumos diários
+  ensureSpace(20);
+  currentPage.drawLine({
+    start: { x: margin, y: getCursorY() },
+    end: { x: pageWidth - margin, y: getCursorY() },
+    thickness: 1,
+    color: colorGray,
+  });
+  setCursorY(getCursorY() - 30);
+}
+
+/**
  * Gera o relatório em PDF a partir dos dados do gerador e das leituras.
  * @param generator - Dados do gerador.
  * @param readings - Array de leituras.
@@ -76,6 +241,8 @@ export async function generateReportPdf(
   generator: ReportGenerator,
   readings: ReportReading[],
   period?: string,
+  resume?: string,
+  provider?: string,
 ): Promise<Uint8Array> {
   const document = await PDFDocument.create();
 
@@ -266,6 +433,32 @@ export async function generateReportPdf(
     color: colorGray,
   });
   cursorY -= 30;
+
+  // Diagnóstico gerado por IA
+  if (resume) {
+    drawDiagnosticSection(
+      resume,
+      provider,
+      page,
+      document,
+      fontBold,
+      fontRegular,
+      colorBlue,
+      colorDarkGray,
+      colorGray,
+      margin,
+      width,
+      height,
+      () => cursorY,
+      (v: number) => {
+        cursorY = v;
+      },
+      checkPageBreak,
+      (newPage) => {
+        page = newPage;
+      },
+    );
+  }
 
   // Resumo por dia
   if (readings.length === 0) {
