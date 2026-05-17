@@ -127,9 +127,9 @@ function drawDiagnosticSection(
   document: PDFDocument,
   fontBold: PDFFont,
   fontRegular: PDFFont,
-  colorBlue: ReturnType<typeof rgb>,
-  colorDarkGray: ReturnType<typeof rgb>,
-  colorGray: ReturnType<typeof rgb>,
+  colorAccent: ReturnType<typeof rgb>,
+  colorBody: ReturnType<typeof rgb>,
+  colorMuted: ReturnType<typeof rgb>,
   margin: number,
   pageWidth: number,
   pageHeight: number,
@@ -157,7 +157,7 @@ function drawDiagnosticSection(
   currentPage.drawText("Diagnóstico Inteligente (IA)", {
     font: fontBold,
     size: 13,
-    color: colorBlue,
+    color: colorAccent,
     x: margin,
     y: getCursorY(),
   });
@@ -170,7 +170,7 @@ function drawDiagnosticSection(
     currentPage.drawText(`  via ${provider}`, {
       font: fontRegular,
       size: 9,
-      color: colorGray,
+      color: colorMuted,
       x: margin + titleWidth + 4,
       y: getCursorY() + 2,
     });
@@ -182,7 +182,7 @@ function drawDiagnosticSection(
     start: { x: margin, y: getCursorY() },
     end: { x: pageWidth - margin, y: getCursorY() },
     thickness: 0.3,
-    color: colorGray,
+    color: colorMuted,
   });
   setCursorY(getCursorY() - 16);
 
@@ -200,7 +200,7 @@ function drawDiagnosticSection(
 
     const font = isBoldParagraph ? fontBold : fontRegular;
     const size = isBoldParagraph ? 10 : fontSize;
-    const color = isBoldParagraph ? colorDarkGray : colorDarkGray;
+    const color = isBoldParagraph ? colorBody : colorBody;
 
     const lines = wrapText(cleanText, font, size, maxTextWidth);
 
@@ -224,8 +224,8 @@ function drawDiagnosticSection(
   currentPage.drawLine({
     start: { x: margin, y: getCursorY() },
     end: { x: pageWidth - margin, y: getCursorY() },
-    thickness: 1,
-    color: colorGray,
+    thickness: 0.5,
+    color: colorMuted,
   });
   setCursorY(getCursorY() - 30);
 }
@@ -249,12 +249,14 @@ export async function generateReportPdf(
   // Fontes e Cores
   const fontRegular = await document.embedFont(StandardFonts.Helvetica);
   const fontBold = await document.embedFont(StandardFonts.HelveticaBold);
-  const colorBlack = rgb(0, 0, 0);
-  const colorGray = rgb(0.4, 0.4, 0.4);
-  const colorDarkGray = rgb(0.25, 0.25, 0.25);
-  const colorBlue = rgb(0.015, 0.392, 0.819);
-  const colorRed = rgb(0.8, 0.15, 0.15);
-  const colorGreen = rgb(0.1, 0.6, 0.2);
+  const colorHeading = rgb(0.1, 0.1, 0.12); // Slate-900 — títulos
+  const colorBody = rgb(0.22, 0.23, 0.26); // Slate-700 — texto corpo
+  const colorMeta = rgb(0.45, 0.47, 0.5); // Slate-500 — metadados
+  const colorMuted = rgb(0.62, 0.64, 0.67); // Slate-400 — labels secundários
+  const colorDivider = rgb(0.85, 0.86, 0.88); // Slate-200 — linhas divisórias
+  const colorAccent = rgb(0.24, 0.31, 0.71); // Indigo-700 — títulos de seção
+  const colorWarning = rgb(0.72, 0.33, 0.08); // Amber-700 — alertas
+  const colorSuccess = rgb(0.09, 0.49, 0.42); // Teal-700 — status OK
 
   let page = document.addPage();
   const { width, height } = page.getSize();
@@ -278,7 +280,7 @@ export async function generateReportPdf(
     options?: { color?: ReturnType<typeof rgb>; bold?: boolean },
   ) => {
     const font = options?.bold ? fontBold : fontRegular;
-    const color = options?.color ?? colorDarkGray;
+    const color = options?.color ?? colorBody;
 
     page.drawText("•", {
       font: fontRegular,
@@ -300,13 +302,13 @@ export async function generateReportPdf(
 
   const statusLabel = "STATUS GERAL: ";
   const statusValue = hasCriticalAlerts ? "Atenção" : "Normal";
-  const statusColor = hasCriticalAlerts ? colorRed : colorGreen;
+  const statusColor = hasCriticalAlerts ? colorWarning : colorSuccess;
   const periodText = period ? `Período: ${period}` : "";
 
   page.drawText("Relatório de Desempenho", {
     font: fontBold,
     size: 20,
-    color: colorBlue,
+    color: colorHeading,
     x: margin,
     y: cursorY,
   });
@@ -315,7 +317,7 @@ export async function generateReportPdf(
   page.drawText(periodText, {
     font: fontRegular,
     size: 10,
-    color: colorGray,
+    color: colorMuted,
     x: width - margin - periodWidth,
     y: cursorY + 5,
   });
@@ -325,7 +327,7 @@ export async function generateReportPdf(
   page.drawText(`Nome do Gerador: ${generator.name ?? "Não Nomeado"}`, {
     font: fontBold,
     size: 14,
-    color: colorBlack,
+    color: colorHeading,
     x: margin,
     y: cursorY,
   });
@@ -336,7 +338,7 @@ export async function generateReportPdf(
   page.drawText(statusLabel, {
     font: fontBold,
     size: 12,
-    color: colorBlack,
+    color: colorBody,
     x: width - margin - statusLabelWidth - statusValueWidth,
     y: cursorY,
   });
@@ -353,7 +355,7 @@ export async function generateReportPdf(
   page.drawText(`ID Interno: ${generator.id}`, {
     font: fontRegular,
     size: 10,
-    color: colorGray,
+    color: colorMeta,
     x: margin,
     y: cursorY,
   });
@@ -362,7 +364,7 @@ export async function generateReportPdf(
   page.drawText(`Endereço MAC (ESP32): ${generator.esp32_id ?? "N/A"}`, {
     font: fontRegular,
     size: 10,
-    color: colorGray,
+    color: colorMeta,
     x: margin,
     y: cursorY,
   });
@@ -392,7 +394,7 @@ export async function generateReportPdf(
     {
       font: fontRegular,
       size: 10,
-      color: colorGray,
+      color: colorMeta,
       x: margin,
       y: cursorY,
     },
@@ -410,8 +412,8 @@ export async function generateReportPdf(
     color:
       currentWaterLevelPercent !== null &&
       currentWaterLevelPercent <= NIVEL_AGUA_CRITICO
-        ? colorRed
-        : colorGray,
+        ? colorWarning
+        : colorMeta,
     x: margin,
     y: cursorY,
   });
@@ -420,7 +422,7 @@ export async function generateReportPdf(
   page.drawText(`Total de leituras no período: ${readings.length}`, {
     font: fontRegular,
     size: 10,
-    color: colorGray,
+    color: colorMeta,
     x: margin,
     y: cursorY,
   });
@@ -429,8 +431,8 @@ export async function generateReportPdf(
   page.drawLine({
     start: { x: margin, y: cursorY },
     end: { x: width - margin, y: cursorY },
-    thickness: 1,
-    color: colorGray,
+    thickness: 0.5,
+    color: colorDivider,
   });
   cursorY -= 30;
 
@@ -443,9 +445,9 @@ export async function generateReportPdf(
       document,
       fontBold,
       fontRegular,
-      colorBlue,
-      colorDarkGray,
-      colorGray,
+      colorAccent,
+      colorBody,
+      colorMuted,
       margin,
       width,
       height,
@@ -465,7 +467,7 @@ export async function generateReportPdf(
     page.drawText("Nenhuma leitura registrada para este período.", {
       font: fontRegular,
       size: 11,
-      color: colorGray,
+      color: colorMuted,
       x: margin,
       y: cursorY,
     });
@@ -480,7 +482,7 @@ export async function generateReportPdf(
       page.drawText(`${day.date}`, {
         font: fontBold,
         size: 13,
-        color: colorBlue,
+        color: colorAccent,
         x: margin,
         y: cursorY,
       });
@@ -491,7 +493,7 @@ export async function generateReportPdf(
         start: { x: margin, y: cursorY },
         end: { x: width - margin, y: cursorY },
         thickness: 0.3,
-        color: colorGray,
+        color: colorDivider,
       });
       cursorY -= 18;
 
@@ -510,7 +512,7 @@ export async function generateReportPdf(
         const isCritical = maxTemp >= TEMP_CRITICA;
         drawBullet(
           `Pico máximo: ${maxTemp.toFixed(1)}°C`,
-          isCritical ? { color: colorRed, bold: true } : undefined,
+          isCritical ? { color: colorWarning, bold: true } : undefined,
         );
       } else {
         drawBullet("Pico máximo: sem dados");
@@ -524,7 +526,7 @@ export async function generateReportPdf(
         const isCritical = minWater <= NIVEL_AGUA_CRITICO;
         drawBullet(
           `Nível mínimo de água: ${minWater.toFixed(1)}% (${minWaterVolume.toFixed(0)}mL)`,
-          isCritical ? { color: colorRed, bold: true } : undefined,
+          isCritical ? { color: colorWarning, bold: true } : undefined,
         );
       } else {
         drawBullet("Nível mínimo de água: sem dados");
@@ -534,19 +536,19 @@ export async function generateReportPdf(
       if (day.criticalAlerts > 0) {
         drawBullet(
           `${day.criticalAlerts} alerta${day.criticalAlerts > 1 ? "s" : ""} crítico${day.criticalAlerts > 1 ? "s" : ""} detectado${day.criticalAlerts > 1 ? "s" : ""}`,
-          { color: colorRed, bold: true },
+          { color: colorWarning, bold: true },
         );
       } else {
-        drawBullet("Nenhum alerta crítico detectado", { color: colorGreen });
+        drawBullet("Nenhum alerta crítico detectado", { color: colorSuccess });
       }
 
       // Status do sensor
       if (day.hasNullReadings) {
         drawBullet("Sensor com falhas de leitura no período", {
-          color: colorRed,
+          color: colorWarning,
         });
       } else {
-        drawBullet("Sensor operando normalmente", { color: colorGreen });
+        drawBullet("Sensor operando normalmente", { color: colorSuccess });
       }
 
       // Espaçamento entre dias
@@ -566,7 +568,7 @@ export async function generateReportPdf(
       {
         font: fontRegular,
         size: 8,
-        color: colorGray,
+        color: colorMuted,
         x: margin,
         y: 20,
       },
