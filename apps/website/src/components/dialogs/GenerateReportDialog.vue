@@ -26,6 +26,8 @@ import { generateReportPdf, generateReportXlsx } from '@smart-gen/reports'
 import { Capacitor } from '@capacitor/core'
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
+import { generateResumeForLLM, type ResumeForLLM } from '@/lib/generateResumeForLLM'
+import { aiService } from '@/services/ai.service'
 
 const props = defineProps<{
   open?: boolean
@@ -119,8 +121,17 @@ const handleGenerateReport = async () => {
     const periodLabel = periodOptions.find((p) => p.value === selectedPeriod.value)?.label
     const safeFileName = `relatorio-${(generator.name ?? generator.id).replace(/\s+/g, '-').toLowerCase()}`
 
+    const resume = generateResumeForLLM(readings, selectedPeriod.value)
+    const generatedResume = await aiService.generateResume(resume as ResumeForLLM)
+
     if (selectedFormat.value === 'pdf') {
-      const pdfBytes = await generateReportPdf(generator, readings, periodLabel)
+      const pdfBytes = await generateReportPdf(
+        generator,
+        readings,
+        periodLabel,
+        generatedResume?.diagnostic,
+        generatedResume?.provider,
+      )
       await exportFile(pdfBytes, `${safeFileName}.pdf`, 'application/pdf')
     } else if (selectedFormat.value === 'xlsx') {
       const xlsxBuffer = await generateReportXlsx(generator, readings, periodLabel)
