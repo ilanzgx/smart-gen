@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
   Dialog,
@@ -28,6 +28,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { generateResumeForLLM, type ResumeForLLM } from '@/lib/generateResumeForLLM'
 import { aiService } from '@/services/ai.service'
+import { Loader2, Check, CircleAlert } from 'lucide-vue-next'
 
 const props = defineProps<{
   open?: boolean
@@ -36,6 +37,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
 }>()
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) resetSteps()
+  },
+)
 
 const generatorsStore = useGeneratorsStore()
 const { selectedGenerator } = storeToRefs(generatorsStore)
@@ -49,6 +57,45 @@ const periodOptions = [
   { value: '30d', label: 'Últimos 30 dias' },
   { value: '90d', label: 'Últimos 90 dias' },
 ]
+
+type StepStatus = 'idle' | 'loading' | 'done' | 'error'
+
+interface GenerationStep {
+  key: string
+  label: string
+  status: StepStatus
+}
+
+const isGenerating = ref(false)
+const isComplete = ref(false)
+const generationError = ref<string | null>(null)
+
+const pdfSteps = ref<GenerationStep[]>([
+  { key: 'fetch', label: 'Buscando dados do gerador', status: 'idle' },
+  { key: 'ai', label: 'Aguardando resposta da IA', status: 'idle' },
+  { key: 'generate', label: 'Gerando documento PDF', status: 'idle' },
+])
+
+const xlsxSteps = ref<GenerationStep[]>([
+  { key: 'fetch', label: 'Buscando dados do gerador', status: 'idle' },
+  { key: 'generate', label: 'Gerando planilha XLSX', status: 'idle' },
+])
+
+const activeSteps = computed(() =>
+  selectedFormat.value === 'pdf' ? pdfSteps.value : xlsxSteps.value,
+)
+
+function resetSteps() {
+  pdfSteps.value.forEach((s) => (s.status = 'idle'))
+  xlsxSteps.value.forEach((s) => (s.status = 'idle'))
+  generationError.value = null
+  isComplete.value = false
+}
+
+function setStepStatus(steps: GenerationStep[], key: string, status: StepStatus) {
+  const step = steps.find((s) => s.key === key)
+  if (step) step.status = status
+}
 
 // Conversor assíncrono otimizado
 const bufferToBase64 = (buffer: ArrayBuffer | Uint8Array): Promise<string> => {
@@ -95,9 +142,14 @@ const exportFile = async (buffer: ArrayBuffer | Uint8Array, fileName: string, mi
 }
 
 const handleGenerateReport = async () => {
-  try {
-    if (!selectedGenerator.value) return
+  if (!selectedGenerator.value || isGenerating.value) return
 
+  isGenerating.value = true
+  resetSteps()
+
+  const steps = activeSteps.value
+
+  try {
     // Computa a data inicial com base no período selecionado
     const now = new Date()
     let startDate: Date | undefined
@@ -114,17 +166,24 @@ const handleGenerateReport = async () => {
       startDate = new Date(now.getTime() - hours * 60 * 60 * 1000)
     }
 
-    // Coleta os dados filtrados
+    // Passo 1: Buscar dados
+    setStepStatus(steps, 'fetch', 'loading')
     const generator = await getGeneratorById(supabase, selectedGenerator.value.id)
     const readings = await getReadingsByGeneratorId(supabase, selectedGenerator.value.id, startDate)
+    setStepStatus(steps, 'fetch', 'done')
 
     const periodLabel = periodOptions.find((p) => p.value === selectedPeriod.value)?.label
     const safeFileName = `relatorio-${(generator.name ?? generator.id).replace(/\s+/g, '-').toLowerCase()}`
 
-    const resume = generateResumeForLLM(readings, selectedPeriod.value)
-    const generatedResume = await aiService.generateResume(resume as ResumeForLLM)
-
     if (selectedFormat.value === 'pdf') {
+      // Passo 2: IA
+      setStepStatus(steps, 'ai', 'loading')
+      const resume = generateResumeForLLM(readings, selectedPeriod.value)
+      const generatedResume = await aiService.generateResume(resume as ResumeForLLM)
+      setStepStatus(steps, 'ai', 'done')
+
+      // Passo 3: Gerar documento
+      setStepStatus(steps, 'generate', 'loading')
       const pdfBytes = await generateReportPdf(
         generator,
         readings,
@@ -133,18 +192,32 @@ const handleGenerateReport = async () => {
         generatedResume?.provider,
       )
       await exportFile(pdfBytes, `${safeFileName}.pdf`, 'application/pdf')
+      setStepStatus(steps, 'generate', 'done')
     } else if (selectedFormat.value === 'xlsx') {
+      // Passo 2: Gerar planilha
+      setStepStatus(steps, 'generate', 'loading')
       const xlsxBuffer = await generateReportXlsx(generator, readings, periodLabel)
       await exportFile(
         xlsxBuffer,
         `${safeFileName}.xlsx`,
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       )
+      setStepStatus(steps, 'generate', 'done')
     }
 
+    // Aguarda o usuário ver o resultado final antes de fechar
+    isComplete.value = true
+    await new Promise((r) => setTimeout(r, 1500))
     emit('update:open', false)
   } catch (error: unknown) {
     console.error('Erro ao gerar relatório:', error)
+    generationError.value = error instanceof Error ? error.message : 'Ocorreu um erro inesperado.'
+
+    for (const step of steps) {
+      if (step.status === 'loading') step.status = 'error'
+    }
+  } finally {
+    isGenerating.value = false
   }
 }
 </script>
@@ -164,7 +237,7 @@ const handleGenerateReport = async () => {
       <div class="space-y-5 mt-2">
         <div class="space-y-2">
           <Label for="period-select">Período</Label>
-          <Select v-model="selectedPeriod">
+          <Select v-model="selectedPeriod" :disabled="isGenerating">
             <SelectTrigger id="period-select" class="w-full bg-gray-100">
               <SelectValue placeholder="Selecione o período" />
             </SelectTrigger>
@@ -178,7 +251,11 @@ const handleGenerateReport = async () => {
 
         <div class="space-y-4">
           <Label>Formato do relatório</Label>
-          <RadioGroup v-model="selectedFormat" class="flex items-center gap-6">
+          <RadioGroup
+            v-model="selectedFormat"
+            class="flex items-center gap-6"
+            :disabled="isGenerating"
+          >
             <div class="flex items-center gap-2">
               <RadioGroupItem class="bg-gray-100" id="format-pdf" value="pdf" />
               <Label for="format-pdf" class="font-normal cursor-pointer">PDF</Label>
@@ -189,21 +266,88 @@ const handleGenerateReport = async () => {
             </div>
           </RadioGroup>
         </div>
+
+        <!-- Progresso de geração -->
+        <Transition name="steps-fade">
+          <div
+            v-if="isGenerating || activeSteps.some((s) => s.status !== 'idle')"
+            class="pt-2 space-y-1"
+          >
+            <div
+              v-for="step in activeSteps"
+              :key="step.key"
+              class="flex items-center gap-2 py-1 transition-all duration-300"
+            >
+              <!-- Indicador -->
+              <Loader2
+                v-if="step.status === 'loading'"
+                class="w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400 animate-spin"
+              />
+              <Check
+                v-else-if="step.status === 'done'"
+                class="w-3.5 h-3.5 shrink-0 text-emerald-500 dark:text-emerald-400"
+              />
+              <CircleAlert
+                v-else-if="step.status === 'error'"
+                class="w-3.5 h-3.5 shrink-0 text-red-500 dark:text-red-400"
+              />
+              <span
+                v-else
+                class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0 ml-1 mr-0.5"
+              />
+
+              <!-- Label -->
+              <span
+                class="text-[13px] transition-colors duration-300"
+                :class="{
+                  'text-slate-400 dark:text-slate-500': step.status === 'idle',
+                  'text-slate-600 dark:text-slate-300': step.status === 'loading',
+                  'text-emerald-600 dark:text-emerald-400': step.status === 'done',
+                  'text-red-600 dark:text-red-400': step.status === 'error',
+                }"
+              >
+                {{ step.label }}
+              </span>
+            </div>
+
+            <!-- Mensagem de erro -->
+            <p
+              v-if="generationError"
+              class="text-[13px] text-red-500 dark:text-red-400 pl-5.5 pt-0.5"
+            >
+              {{ generationError }}
+            </p>
+          </div>
+        </Transition>
       </div>
 
       <DialogFooter class="pt-4">
         <DialogClose as-child>
-          <Button type="button" variant="outline">Cancelar</Button>
+          <Button type="button" variant="outline" :disabled="isGenerating">Cancelar</Button>
         </DialogClose>
         <Button
           type="button"
           @click="handleGenerateReport"
-          :disabled="!selectedGenerator"
+          :disabled="!selectedGenerator || isGenerating"
           class="min-w-32.5"
         >
-          Gerar Relatório
+          <Loader2 v-if="isGenerating" class="w-4 h-4 mr-2 animate-spin" />
+          {{ isGenerating ? 'Gerando...' : 'Gerar Relatório' }}
         </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+.steps-fade-enter-active,
+.steps-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.steps-fade-enter-from,
+.steps-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>
