@@ -23,9 +23,8 @@ import { useGeneratorsStore } from '@/stores/generators.store'
 import { supabase } from '@/lib/supabase'
 import { getGeneratorById, getReadingsByGeneratorId } from '@smart-gen/supabase'
 import { generateReportPdf, generateReportXlsx } from '@smart-gen/reports'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import { Filesystem, Directory } from '@capacitor/filesystem'
-import { Share } from '@capacitor/share'
 import { generateResumeForLLM, type ResumeForLLM } from '@/lib/generateResumeForLLM'
 import { aiService } from '@/services/ai.service'
 import { Loader2, Check, CircleAlert } from 'lucide-vue-next'
@@ -37,6 +36,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
 }>()
+
+const NativeFileOpener = registerPlugin<{
+  openFile: (options: { path: string; mimeType: string }) => Promise<void>
+}>('NativeFileOpener')
 
 watch(
   () => props.open,
@@ -115,18 +118,25 @@ const bufferToBase64 = (buffer: ArrayBuffer | Uint8Array): Promise<string> => {
 // Função utilitária para lidar com a exportação/download nos diferentes ambientes
 const exportFile = async (buffer: ArrayBuffer | Uint8Array, fileName: string, mimeType: string) => {
   if (Capacitor.isNativePlatform()) {
-    const base64Data = await bufferToBase64(buffer)
+    try {
+      const base64Data = await bufferToBase64(buffer)
 
-    const savedFile = await Filesystem.writeFile({
-      path: fileName,
-      data: base64Data,
-      directory: Directory.Cache,
-    })
+      // Salva o arquivo no cache do app
+      const savedFile = await Filesystem.writeFile({
+        path: fileName.replace(/\//g, '-'),
+        data: base64Data,
+        directory: Directory.Cache,
+      })
 
-    await Share.share({
-      title: 'Relatório do Gerador',
-      url: savedFile.uri,
-    })
+      // Aciona o código nativo customizado passando a URI do arquivo e o tipo (PDF ou Excel)
+      await NativeFileOpener.openFile({
+        path: savedFile.uri,
+        mimeType: mimeType,
+      })
+    } catch (e: unknown | Error) {
+      console.error('Erro ao exportar no mobile:', e)
+      alert(`Não foi possível abrir o relatório: ${(e as Error).message}`)
+    }
   } else {
     const blob = new Blob([buffer as BlobPart], { type: mimeType })
     const url = URL.createObjectURL(blob)
