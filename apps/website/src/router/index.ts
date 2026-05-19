@@ -4,6 +4,7 @@ import AboutView from '@/views/AboutView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import LoginView from '@/views/LoginView.vue'
 import DashboardView from '@/views/DashboardView.vue'
+import GeneratorsView from '@/views/GeneratorsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import RecoverPasswordView from '@/views/RecoverPasswordView.vue'
@@ -20,6 +21,7 @@ import { useAuthStore } from '@/stores/auth.store'
  * /recover-password - Recover Password (pública)
  * /update-password - Update Password (pública)
  * /dashboard - Dashboard (privada)
+ * /geradores - Geradores (privada)
  * /profile - Profile (privada)
  * /:pathMatch(.*)* - 404 Not Found (pública)
  */
@@ -84,6 +86,12 @@ const router = createRouter({
       name: 'dashboard',
       component: DashboardView,
       alias: ['/painel'],
+    },
+    {
+      path: '/geradores',
+      name: 'generators',
+      component: GeneratorsView,
+      alias: ['/geradores', '/generators'],
     },
     {
       path: '/perfil',
