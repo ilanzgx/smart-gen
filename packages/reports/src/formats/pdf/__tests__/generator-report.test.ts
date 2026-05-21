@@ -37,11 +37,7 @@ describe("generateReportPdf", () => {
     ];
 
     // Act
-    const result = await generateReportPdf(
-      mockGenerator,
-      readings,
-      "Últimas 24 horas",
-    );
+    const result = await generateReportPdf(mockGenerator, readings, "Últimas 24 horas");
 
     // Assert
     expect(result).toBeInstanceOf(Uint8Array);
@@ -82,12 +78,11 @@ describe("generateReportPdf", () => {
       });
     }
 
+    // Resume longo de diagnóstico IA para forçar overflow de página
+    const longResume = Array(30).fill("O gerador apresentou comportamento estável durante o período analisado, sem variações significativas de temperatura ou nível de água.").join("\n\n");
+
     // Act
-    const result = await generateReportPdf(
-      mockGenerator,
-      readings,
-      "Últimos 15 dias",
-    );
+    const result = await generateReportPdf(mockGenerator, readings, "Últimos 15 dias", longResume, "Gemini");
 
     // Assert
     expect(result).toBeInstanceOf(Uint8Array);
