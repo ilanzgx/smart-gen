@@ -25,7 +25,7 @@ import { getGeneratorById, getReadingsByGeneratorId } from '@smart-gen/supabase'
 import { generateReportPdf, generateReportXlsx } from '@smart-gen/reports'
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { Filesystem, Directory } from '@capacitor/filesystem'
-import { generateResumeForLLM, type ResumeForLLM } from '@/lib/generateResumeForLLM'
+import { generateResumeForLLM } from '@/lib/generateResumeForLLM'
 import { aiService } from '@/services/ai.service'
 import { Loader2, Check, CircleAlert } from 'lucide-vue-next'
 
@@ -189,7 +189,11 @@ const handleGenerateReport = async () => {
       // Passo 2: IA
       setStepStatus(steps, 'ai', 'loading')
       const resume = generateResumeForLLM(readings, selectedPeriod.value)
-      const generatedResume = await aiService.generateResume(resume as ResumeForLLM)
+
+      let generatedResume = null
+      if (resume) {
+        generatedResume = await aiService.generateResume(resume)
+      }
       setStepStatus(steps, 'ai', 'done')
 
       // Passo 3: Gerar documento
