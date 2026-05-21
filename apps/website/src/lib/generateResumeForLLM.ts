@@ -1,4 +1,5 @@
 import type { Leitura } from '@smart-gen/supabase'
+import { TEMP_CRITICA } from '@smart-gen/shared'
 
 export interface ResumeForLLM {
   period: string
@@ -69,7 +70,7 @@ export function generateResumeForLLM(readings: Leitura[], period: string): Resum
       average: Number(averageTemp.toFixed(1)),
       maxAbs: maxTemp,
       minAbs: minTemp,
-      alertsAboveLimit: temps.map((t) => t >= 85).length,
+      alertsAboveLimit: temps.filter((t) => t >= TEMP_CRITICA).length,
       hottestDay: hottestDayDate,
     },
     waterLevel: {

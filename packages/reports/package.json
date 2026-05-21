@@ -16,6 +16,7 @@
     "vitest": "^4.1.2"
   },
   "dependencies": {
+    "@smart-gen/shared": "workspace:*",
     "exceljs": "^4.4.0",
     "pdf-lib": "^1.17.1"
   }
