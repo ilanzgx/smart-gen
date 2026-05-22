@@ -1,0 +1,24 @@
+# Ignore local dependencies
+node_modules
+**/node_modules
+
+# Ignore git metadata
+.git
+.github
+
+# Ignore build artifacts and caches
+dist
+**/dist
+.eslintcache
+.vscode
+coverage
+**/coverage
+
+# Ignore environment variables files
+.env
+.env.local
+.env.*.local
+
+# Ignore workspace CLI configs and firmware builds
+firmware/build
+firmware/.pio
