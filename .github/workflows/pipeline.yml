@@ -243,12 +243,13 @@ jobs:
           cd apps/mobile/android
           chmod +x gradlew
           ./gradlew assembleDebug
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/smart-gen.apk
 
       - name: Upload APK to Github Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: smart-gen-debug-apk
-          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/smart-gen.apk
           if-no-files-found: error
 
       - name: Send APK to Telegram 🚀
@@ -263,7 +264,7 @@ jobs:
             🎯 <b>Branch:</b> <code>${{ github.ref_name }}</code>
             🛠️ <b>Status:</b> Build Android gerada com sucesso para o commit ${{ github.sha }}.
             👤 <b>Autor:</b> ${{ github.actor }}
-          document: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          document: apps/mobile/android/app/build/outputs/apk/debug/smart-gen.apk
 
   build-docker:
     name: Build & Push Docker Image
@@ -296,8 +297,8 @@ jobs:
           file: apps/website/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ steps.string.outputs.lowercase }}/smart-gen-website:latest
-            ghcr.io/${{ steps.string.outputs.lowercase }}/smart-gen-website:${{ github.sha }}
+            ghcr.io/${{ steps.string.outputs.lowercase }}/website:latest
+            ghcr.io/${{ steps.string.outputs.lowercase }}/website:${{ github.sha }}
           build-args: |
             VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL }}
             VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -334,13 +335,13 @@ jobs:
             📝 <b>Commit:</b> <i>${{ github.event.head_commit.message || github.event.pull_request.title }}</i>
 
             🛠️ <b>Status dos Jobs:</b>
-            • <b>CI (Lint):</b> ${{ needs.ci-lint.result == 'success' && '🟢 Sucesso' || (needs.ci-lint.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>CI (TypeScript):</b> ${{ needs.ci-typecheck.result == 'success' && '🟢 Sucesso' || (needs.ci-typecheck.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>CI (Testes):</b> ${{ needs.ci-test.result == 'success' && '🟢 Sucesso' || (needs.ci-test.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>CI (Build):</b> ${{ needs.ci-build.result == 'success' && '🟢 Sucesso' || (needs.ci-build.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>Website (Vercel):</b> ${{ needs.deploy-website.result == 'success' && '🟢 Sucesso' || (needs.deploy-website.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>OTA (Supabase):</b> ${{ needs.deploy-ota.result == 'success' && '🟢 Sucesso' || (needs.deploy-ota.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>Mobile (Android APK):</b> ${{ needs.build-mobile.result == 'success' && '🟢 Sucesso' || (needs.build-mobile.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>Docker (GHCR):</b> ${{ needs.build-docker.result == 'success' && '🟢 Sucesso' || (needs.build-docker.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            <code>• CI (Lint)           :</code> ${{ needs.ci-lint.result == 'success' && '🟢 Sucesso' || (needs.ci-lint.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            <code>• CI (TypeScript)     :</code> ${{ needs.ci-typecheck.result == 'success' && '🟢 Sucesso' || (needs.ci-typecheck.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            <code>• CI (Testes)         :</code> ${{ needs.ci-test.result == 'success' && '🟢 Sucesso' || (needs.ci-test.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            <code>• CI (Build)          :</code> ${{ needs.ci-build.result == 'success' && '🟢 Sucesso' || (needs.ci-build.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            <code>• Website (Vercel)    :</code> ${{ needs.deploy-website.result == 'success' && '🟢 Sucesso' || (needs.deploy-website.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            <code>• OTA (Supabase)      :</code> ${{ needs.deploy-ota.result == 'success' && '🟢 Sucesso' || (needs.deploy-ota.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            <code>• Mobile (Android APK):</code> ${{ needs.build-mobile.result == 'success' && '🟢 Sucesso' || (needs.build-mobile.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            <code>• Docker (GHCR)       :</code> ${{ needs.build-docker.result == 'success' && '🟢 Sucesso' || (needs.build-docker.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
 
             🔗 <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Acompanhar Execução no GitHub</a>
