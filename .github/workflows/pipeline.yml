@@ -1,0 +1,293 @@
+name: Pipeline (CI/CD)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/pipeline.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/pipeline.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  ci-lint:
+    name: Lint Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run Lint
+        run: pnpm -r --if-present run lint
+
+  ci-typecheck:
+    name: TypeScript Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run Type Check
+        run: pnpm -r --if-present run type-check
+
+  ci-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run Tests
+        run: pnpm -r --if-present run test:unit
+
+  ci-build:
+    name: Compile Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run Build
+        run: pnpm -r --if-present run build
+
+  deploy-website:
+    name: Deploy Website (Vercel)
+    needs: [ci-lint, ci-typecheck, ci-test, ci-build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Pull Vercel Environment
+        run: npx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project
+        run: npx vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Prebuilt to Vercel
+        run: npx vercel@latest deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-ota:
+    name: Deploy OTA Bundle (Mobile Autoupdate)
+    needs: [ci-lint, ci-typecheck, ci-test, ci-build]
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'pull_request'
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      VITE_APP_VERSION: ${{ github.sha }}
+      GITHUB_SHA: ${{ github.sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build and Upload OTA
+        run: node scripts/upload-ota-bundle.mjs
+
+  build-mobile:
+    name: Build Android Bundle (APK)
+    needs: [ci-lint, ci-typecheck, ci-test, ci-build]
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event_name != 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build Web & Sync Mobile
+        run: pnpm build:web-mobile
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_VERSION: ${{ github.sha }}
+
+      - name: Build Android APK
+        run: |
+          cd apps/mobile/android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK to Github Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-gen-debug-apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Send APK to Telegram 🚀
+        uses: appleboy/telegram-action@v1.0.1
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: html
+          message: |
+            📦 <b>Novo APK Gerado</b>
+
+            🎯 <b>Branch:</b> <code>${{ github.ref_name }}</code>
+            🛠️ <b>Status:</b> Build Android gerada com sucesso para o commit ${{ github.sha }}.
+            👤 <b>Autor:</b> ${{ github.actor }}
+          document: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+  notify:
+    name: Telegram Notifications
+    needs: [ci-lint, ci-typecheck, ci-test, ci-build, deploy-website, deploy-ota, build-mobile]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check Overall Status & Notify
+        uses: appleboy/telegram-action@v1.0.1
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: html
+          disable_web_page_preview: true
+          message: |
+            📊 <b>Status da Pipeline: ${{ github.repository }}</b>
+            👤 <b>Autor:</b> ${{ github.actor }}
+            📦 <b>Branch:</b> <code>${{ github.ref_name }}</code>
+            📝 <b>Commit:</b> <i>${{ github.event.head_commit.message || github.event.pull_request.title }}</i>
+
+            🛠️ <b>Status dos Jobs:</b>
+            • <b>CI (Lint):</b> ${{ needs.ci-lint.result == 'success' && '🟢 Sucesso' || (needs.ci-lint.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>CI (TypeScript):</b> ${{ needs.ci-typecheck.result == 'success' && '🟢 Sucesso' || (needs.ci-typecheck.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>CI (Testes):</b> ${{ needs.ci-test.result == 'success' && '🟢 Sucesso' || (needs.ci-test.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>CI (Build):</b> ${{ needs.ci-build.result == 'success' && '🟢 Sucesso' || (needs.ci-build.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>Website (Vercel):</b> ${{ needs.deploy-website.result == 'success' && '🟢 Implantado' || (needs.deploy-website.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>OTA (Supabase):</b> ${{ needs.deploy-ota.result == 'success' && '🟢 Atualizado' || (needs.deploy-ota.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>Mobile (Android APK):</b> ${{ needs.build-mobile.result == 'success' && '🟢 Gerado' || (needs.build-mobile.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+
+            🔗 <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Acompanhar Execução no GitHub</a>

@@ -1,7 +1,6 @@
-name: Telegram Notification
+name: GitHub Events Notification
+
 on:
-  push:
-    branches: [main, develop]
   issues:
     types: [opened, closed, reopened]
   pull_request:
@@ -10,37 +9,14 @@ on:
     types: [submitted]
   pull_request_review_comment:
     types: [created]
-  workflow_run:
-    workflows: ["CI", "Deploy Website", "Build Mobile (APK)"]
-    types: [completed]
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
-  notify:
+  notify-events:
     runs-on: ubuntu-latest
     steps:
-      # ── Push ──
-      - name: Notify Push
-        if: github.event_name == 'push'
-        uses: appleboy/telegram-action@v1.0.1
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: html
-          disable_web_page_preview: true
-          message: |
-            🚀 <b>Push Detectado</b>
-
-            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
-            👤 <b>Autor:</b> ${{ github.actor }}
-            📦 <b>Branch:</b> <code>${{ github.ref_name }}</code>
-            📝 <b>Resumo:</b> <i>${{ github.event.head_commit.message }}</i>
-
-            🔗 <a href="${{ github.event.compare }}">Comparar Alterações (Diff)</a>
-
       # ── Pull Request ──
       - name: Notify Pull Request
         if: github.event_name == 'pull_request'
@@ -115,42 +91,3 @@ jobs:
             🔍 <b>Ação:</b> Deixou um comentário detalhado em uma linha específica do código.
 
             🔗 <a href="${{ github.event.comment.html_url }}">Acessar Comentário</a>
-
-      # ── Status de Workflow (Deploy) ──
-      - name: Notify Deploy Success
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.name == 'Deploy Website'
-        uses: appleboy/telegram-action@v1.0.1
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: html
-          disable_web_page_preview: true
-          message: |
-            🟢 <b>Deploy Concluído</b>
-
-            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
-            📦 <b>Branch:</b> <code>${{ github.event.workflow_run.head_branch }}</code>
-
-            🌍 <a href="https://smartgen-iot.vercel.app/">Testar Ambiente Online</a>
-            🔗 <a href="${{ github.event.workflow_run.html_url }}">Logs do GitHub Actions</a>
-
-      # ── Status de Workflow (Falhas Geral) ──
-      - name: Notify Workflow Failure
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
-        uses: appleboy/telegram-action@v1.0.1
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: html
-          disable_web_page_preview: true
-          message: |
-            🔴 <b>FALHA NA PIPELINE (CI/CD)</b>
-
-            🎯 <b>Repositório:</b> <code>${{ github.repository }}</code>
-            🛠 <b>Pipeline:</b> ${{ github.event.workflow_run.name }}
-            📦 <b>Branch de Origem:</b> <code>${{ github.event.workflow_run.head_branch }}</code>
-            👤 <b>Responsável:</b> ${{ github.event.workflow_run.actor.login }}
-
-            ⚠️ <b>Atenção:</b> A esteira de verificação quebrou. Favor corrigir imediatamente para evitar bloqueio da branch.
-
-            🔗 <a href="${{ github.event.workflow_run.html_url }}">Analisar Logs de Erro</a>
