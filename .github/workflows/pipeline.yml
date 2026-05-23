@@ -22,14 +22,17 @@ on:
       - "pnpm-workspace.yaml"
       - ".github/workflows/pipeline.yml"
   workflow_dispatch:
-
 concurrency:
   group: pipeline-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 permissions:
   contents: read
   actions: read
+  packages: write
 
 jobs:
   ci-lint:
@@ -262,9 +265,58 @@ jobs:
             👤 <b>Autor:</b> ${{ github.actor }}
           document: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
 
+  build-docker:
+    name: Build & Push Docker Image
+    needs: [ci-lint, ci-typecheck, ci-test, ci-build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lowercase Repository Name for Docker Tag
+        id: string
+        run: |
+          echo "lowercase=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/website/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.string.outputs.lowercase }}/smart-gen-website:latest
+            ghcr.io/${{ steps.string.outputs.lowercase }}/smart-gen-website:${{ github.sha }}
+          build-args: |
+            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL }}
+            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   notify:
     name: Telegram Notifications
-    needs: [ci-lint, ci-typecheck, ci-test, ci-build, deploy-website, deploy-ota, build-mobile]
+    needs:
+      [
+        ci-lint,
+        ci-typecheck,
+        ci-test,
+        ci-build,
+        deploy-website,
+        deploy-ota,
+        build-mobile,
+        build-docker,
+      ]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -286,8 +338,9 @@ jobs:
             • <b>CI (TypeScript):</b> ${{ needs.ci-typecheck.result == 'success' && '🟢 Sucesso' || (needs.ci-typecheck.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
             • <b>CI (Testes):</b> ${{ needs.ci-test.result == 'success' && '🟢 Sucesso' || (needs.ci-test.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
             • <b>CI (Build):</b> ${{ needs.ci-build.result == 'success' && '🟢 Sucesso' || (needs.ci-build.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>Website (Vercel):</b> ${{ needs.deploy-website.result == 'success' && '🟢 Implantado' || (needs.deploy-website.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>OTA (Supabase):</b> ${{ needs.deploy-ota.result == 'success' && '🟢 Atualizado' || (needs.deploy-ota.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
-            • <b>Mobile (Android APK):</b> ${{ needs.build-mobile.result == 'success' && '🟢 Gerado' || (needs.build-mobile.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>Website (Vercel):</b> ${{ needs.deploy-website.result == 'success' && '🟢 Sucesso' || (needs.deploy-website.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>OTA (Supabase):</b> ${{ needs.deploy-ota.result == 'success' && '🟢 Sucesso' || (needs.deploy-ota.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>Mobile (Android APK):</b> ${{ needs.build-mobile.result == 'success' && '🟢 Sucesso' || (needs.build-mobile.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
+            • <b>Docker (GHCR):</b> ${{ needs.build-docker.result == 'success' && '🟢 Sucesso' || (needs.build-docker.result == 'skipped' && '⚪ Ignorado' || '🔴 Falhou') }}
 
             🔗 <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Acompanhar Execução no GitHub</a>
