@@ -10,7 +10,7 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
-      - ".github/workflows/pipeline.yml"
+      - ".github/workflows/**"
   pull_request:
     branches: [main, develop]
     paths:
@@ -20,7 +20,7 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
-      - ".github/workflows/pipeline.yml"
+      - ".github/workflows/**"
   workflow_dispatch:
 concurrency:
   group: pipeline-${{ github.ref }}
