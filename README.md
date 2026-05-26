@@ -1,331 +1,233 @@
 <a id="topo"></a>
 
-# ⚡​ Smart Gen - Monitoramento de geradores de energia
+# Smart Gen — Sistema de Monitoramento Remoto de Geradores
 
-Aplicação responsável por monitorar geradores de energia através de microcontroladores ESP32 com dados adquiridos através de sensores. Monorepo construído com [PNPM Workspaces](https://pnpm.io/workspaces). Ele suporta múltiplas aplicações e concentra as lógicas reutilizáveis do projeto.
+[![CI Pipeline](https://github.com/ilanzgx/smart-gen/actions/workflows/pipeline.yml/badge.svg)](https://github.com/ilanzgx/smart-gen/actions)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.html)
+[![Node.js Version](https://img.shields.io/badge/Node.js-%3E%3D%2020.0-green.svg)](https://nodejs.org/)
+[![PNPM Workspaces](https://img.shields.io/badge/pnpm-%3E%3D%2010.0-blue.svg)](https://pnpm.io/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
 
-## Sumário
+O **Smart Gen** é um ecossistema completo em formato de protótipo funcional altamente estruturado, desenvolvido para o monitoramento reativo e preventivo de geradores de energia. A sua arquitetura é robusta, modular e elegante, estruturada sob um monorepo desacoplado (**pnpm workspaces**) que é blindado e documentado por **mais de 150 testes automatizados**.
 
-- [Visão Geral](#visão-geral)
-- [Objetivos](#objetivos)
-- [Tech Stack](#tech-stack)
-- [Pré-requisitos](#pré-requisitos)
-- [Arquitetura](#arquitetura)
-- [Começando](#começando)
-- [Variáveis de Ambiente](#variáveis-de-ambiente)
-- [Aplicações](#aplicações)
-- [Pacotes Internos](#pacotes-internos)
-- [Scripts Disponíveis](#scripts-disponíveis)
-- [Workflow da Equipe](#workflow-da-equipe)
-- [Testes](#testes)
-- [Deploy / CI-CD](#deploy--ci-cd)
-- [Regras Rápidas da Equipe](#regras-rápidas-da-equipe)
+Utilizando o poder de hardware embarcado baseado em **ESP32** (equipado com sensores físicos calibrados **DS18B20** e **HC-SR04**) para aquisição de telemetria em tempo real, **Supabase** para infraestrutura e sincronização de dados instantânea via WebSockets, e interfaces móveis/responsivas de alto polimento (**Vue 3** + **Capacitor Mobile**), o ecossistema permite acompanhar a integridade e saúde operacional de suas unidades sob qualquer circunstância.
 
-## Visão Geral
+<p align="center">
+  <img src="docs/images/website-1.png" alt="Painel Principal do Dashboard" width="48%" />
+  <img src="docs/images/website-2.png" alt="Gráficos de Telemetria e Histórico" width="48%" />
+</p>
+<p align="center">
+  <img src="docs/images/website-3.png" alt="Gerenciamento e Status de Unidades" width="48%" />
+  <img src="docs/images/website-4.png" alt="Autenticação Segura e Controle de Acesso" width="48%" />
+</p>
 
-Smart Gen é um ecossistema completo para o monitoramento remoto de geradores de energia. Utilizando o poder do **ESP32** para coleta de dados e o **Supabase** como infraestrutura de backend, o projeto oferece uma visão clara e em tempo real da saúde operacional dos equipamentos, com suporte a atualizações **Over-the-Air (OTA)** que permitem entregar novas versões da interface mobile sem reinstalação do aplicativo.
+---
 
-## Objetivos
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
-O projeto Smart Gen visa resolver o problema de monitoramento manual e reativo de geradores, focando em:
+## 🗺️ Visão Arquitetural do Ecossistema
 
-- **Monitoramento Preventivo**: Coletar dados de temperatura e níveis críticos de fluidos para evitar falhas catastróficas.
-- **Visualização em Tempo Real**: Fornecer um dashboard intuitivo e mobile-first para que gestores acompanhem o status de qualquer lugar.
-- **Baixo Custo e Alta Escalabilidade**: Utilizar microcontroladores acessíveis (ESP32) e uma arquitetura de monorepo que permite a expansão para múltiplos geradores e novas interfaces (Mobile/Desktop) sem duplicação de lógica.
-- **Atualizações Contínuas**: Entregar melhorias na interface mobile via OTA, sem necessidade de publicar uma nova versão no app store.
-- **Decisões Baseadas em Dados**: Criar um histórico confiável de leituras para análises futuras de manutenção e eficiência energética.
+O monorepo adota uma arquitetura **Clean & Decoupled** (desacoplada). As aplicações de ponta nunca se comunicam de forma direta ou crua com o banco de dados; todas as interações passam por adaptadores e bibliotecas compartilhadas locais do monorepo.
 
-## Tech Stack
+O fluxo abaixo representa o percurso dos dados, desde a leitura dos sensores analógicos até a renderização e distribuição automatizada de builds:
 
-- **Linguagem**: TypeScript
-- **Gerenciador de Pacotes**: PNPM
-- **Framework Frontend**: Vue 3 com Vite
-- **Estilização**: Tailwind CSS v4
-- **Gerenciamento de Estado**: Pinia
-- **Roteamento**: Vue Router
-- **Testes**: Vitest
-- **Linting**: ESLint + OxLint + Prettier
-- **Backend**: Supabase (PostgreSQL + Auth + Storage + Edge Functions)
-- **Mobile**: Capacitor + `@capgo/capacitor-updater` (OTA)
-- **Firmware**: C++ (Arduino/ESP-IDF) para ESP32
-- **CI/CD**: GitHub Actions
+```mermaid
+flowchart TD
+    subgraph Hardware ["Hardware e Sensores"]
+        ESP32[ESP32-D0WD-V3] -->|OneWire Protocol| DS18B20[Sensor DS18B20 - Temperatura]
+        ESP32 -->|Trigger / Echo Pings| HCSR04[Sensor HC-SR04 - Nível de Água]
+        ESP32 -->|HTTP POST JSON| REST["Supabase Rest API /rest/v1/readings"]
+    end
 
-## Pré-requisitos
+    subgraph Cloud ["Nuvem e Banco - Supabase"]
+        REST --> DB[(PostgreSQL Database)]
+        DB --> RealtimeEngine[Supabase Realtime Engine]
+        RealtimeEngine --> DB
+    end
 
-- [Node.js](https://nodejs.org/) (versão >= 20.0)
-- [PNPM](https://pnpm.io/installation) (gerenciador de pacotes)
-- [Git](https://git-scm.com/) (para versionamento)
-- Conta no [Supabase](https://supabase.com/) (para backend)
+    subgraph LocalPackages ["Pacotes e Abstrações Reutilizáveis"]
+        SupabasePkg["@smart-gen/supabase"] --> RealtimeEngine
+        RealtimeEngine --> SupabasePkg
+        SharedPkg["@smart-gen/shared"] -.-> SupabasePkg
+        ReportsPkg["@smart-gen/reports"] -->|Motor de Geração PDF e Excel| DB
+    end
 
-## Arquitetura
+    subgraph Clients ["Aplicações Clientes"]
+        SupabasePkg -->|Fluxo de Dados Reativo| WebApp["apps/website (Vue 3 / Vite)"]
+        SupabasePkg -->|Fluxo de Dados Reativo| MobileApp["apps/mobile (WebView Capacitor)"]
+        SharedPkg -.->|Regras de Negócio e Constantes| WebApp
+    end
 
-Smart Gen é organizado como um monorepo usando PNPM Workspaces com a seguinte estrutura:
+    subgraph Pipeline ["Automação GitHub Actions"]
+        Monorepo[Commit / Push] -->|Gera triggers| CI[CI: Lint, Test, Typecheck]
+        CI -->|Aprovado| CD[CD: Deploy Vercel + Build Android APK + Upload OTA Bundle]
+        CD -->|OTA ZIP| Storage[Supabase Storage bucket: ota-bundles]
+        MobileApp -->|Capacitor Updater Poll| Storage
+    end
+```
+
+---
+
+## 🎯 Objetivos de Negócio & Engenharia
+
+- **Monitoramento Preventivo Eficaz:** Prevenir superaquecimentos de motor e falhas críticas por falta de fluidos refrigerantes utilizando telemetria de precisão calibrada.
+- **Reatividade Instantânea (Realtime):** Notificar alterações de status operacionais em menos de 500ms através de subscrições via WebSockets estáveis que evitam colisões de concorrência.
+- **Deploy Ágil Over-the-Air (OTA):** Atualizar o aplicativo mobile nativo instantaneamente sem requerer re-submissão e aprovações manuais na Google Play ou App Store.
+- **Baixo Custo Embarcado:** Hardware robusto, acessível e de baixíssimo consumo energético baseado no chip ESP32.
+- **Auditoria e Conformidade:** Motor de relatórios estruturado capaz de exportar logs históricos consolidados em PDF e planilhas eletrônicas Excel.
+
+---
+
+## 🛠️ Stack Tecnológica
+
+| Camada                 | Tecnologia                               | Propósito / Detalhes                                                                |
+| :--------------------- | :--------------------------------------- | :---------------------------------------------------------------------------------- |
+| **Core Monorepo**      | Node.js v22 & PNPM v10                   | Gerenciamento de dependências via Workspaces rápidos e isolados.                    |
+| **Frontend Web**       | Vue 3 (Composition API) & Vite           | SPA moderna de alta performance com carregamento sob demanda.                       |
+| **Estilização**        | Tailwind CSS v4 & Lucide Icons           | Estilização por meio da nova engine de compilação baseada em CSS nativo.            |
+| **Estado & Rotas**     | Pinia & Vue Router                       | Armazenamento modular reativo (`auth.store`, `generators.store`) e guards de rotas. |
+| **Wrapper Mobile**     | Capacitor & @capgo/capacitor-updater     | Empacotamento híbrido nativo com suporte a atualizações OTA dinâmicas.              |
+| **Camada de Nuvem**    | Supabase (PostgreSQL, Realtime, Storage) | Autenticação unificada, banco de dados seguro e WebSockets nativos.                 |
+| **Hardware**           | C++ (Framework Arduino / ESP-IDF)        | Loop de telemetria otimizado no chip ESP32 com conexões de Wi-Fi redundantes.       |
+| **Relatórios**         | `pdf-lib` & `exceljs`                    | Geração sob demanda de documentos formatados de auditoria.                          |
+| **Qualidade & Testes** | Vitest, ESLint, OxLint, Prettier & Husky | Análise estática ultrarrápida, formatação rigorosa e testes automatizados.          |
+
+---
+
+## 📂 Organização Interna do Monorepo
 
 ```bash
 smart-gen/
-├── apps/                        # Aplicações finais
-│   ├── website/                 # Aplicação frontend principal (Vue 3)
-│   └── mobile/                  # App mobile com Capacitor (Android/iOS)
-├── packages/                    # Pacotes reutilizáveis
-│   ├── @smart-gen/shared        # Utilitários, tipos e constantes compartilhados
-│   ├── @smart-gen/supabase      # Camada de acesso ao Supabase
-│   └── @smart-gen/tsconfig      # Configurações TypeScript centralizadas
-├── firmware/                    # Código C++ para o microcontrolador ESP32
-├── scripts/                     # Scripts utilitários (ex: upload de bundle OTA)
-├── .github/workflows/           # Pipelines do GitHub Actions
-├── pnpm-workspace.yaml          # Configuração do PNPM Workspaces
-└── package.json                 # Scripts raiz e configurações
+├── apps/                         # Aplicações Finais Declaradas
+│   ├── website/                  # Interface web principal Vue 3 + Tailwind v4 + Pinia
+│   └── mobile/                   # Invólucro nativo Capacitor com controle de OTA
+├── packages/                     # Pacotes de Compartilhamento Local
+│   ├── @smart-gen/shared         # Utilitários puros de lógica, constantes e schemas de validação Zod
+│   ├── @smart-gen/supabase       # Data Access Layer isolada: recursos de banco de dados e WebSockets
+│   ├── @smart-gen/reports        # Serviço de geração e compilação de relatórios (PDF/Excel)
+│   └── @smart-gen/tsconfig       # Configurações TypeScript padronizadas (Base, Node, Vue, Vitest)
+├── firmware/                     # Código embarcado C++ para o chip ESP32
+│   ├── firmware.ino              # Inicialização do loop e orquestração dos sensores
+│   ├── smartgen_sensors.cpp      # Lógica de temporização e calibração do DS18B20 e HC-SR04
+│   ├── smartgen_supabase.cpp     # Chamadas REST seguras de persistência no Supabase
+│   └── smartgen_wifi.cpp         # Gestão de conexão Wi-Fi resiliente com redes redundantes
+├── scripts/                      # Automatizadores de empacotamento
+│   └── upload-ota-bundle.mjs     # Compactador do front-end e dispatcher para o bucket de OTA
+├── .github/workflows/            # Esteira de CI/CD automatizada do GitHub Actions
+└── package.json                  # Scripts globais de orquestração do monorepo
 ```
 
-### Comunicação entre Camadas
+---
 
-1. **Frontend** (`apps/website`) nunca chama o Supabase diretamente
-2. Toda comunicação com o banco ocorre através de `@smart-gen/supabase`
-3. Lógica de negócio compartilhada fica em `@smart-gen/shared`
-4. Configurações TypeScript são padronizadas em `@smart-gen/tsconfig`
+## 🚀 Como Começar (Guia Prático)
 
-### Fluxo de Atualização OTA
-
-```bash
-Push para main
-    └── GitHub Actions (CI)
-            └── Build do Website
-                    └── Upload do bundle .zip para o Supabase Storage
-                            └── App Mobile detecta nova versão via Edge Function
-                                    └── Download e aplicação automática sem reinstalar
-```
-
-## Começando
-
-### 1. Clone o Repositório
+### 1. Clonar e Inicializar Dependências
 
 ```bash
 git clone https://github.com/ilanzgx/smart-gen.git
 cd smart-gen
-git checkout -b develop origin/develop
+
+# Configure a ramificação de desenvolvimento ativa
+git checkout develop
+
+# Sincronize o repositório local e baixe todas as dependências
+pnpm run sync
 ```
 
-### 2. Instale as Dependências
+### 2. Configurar Variáveis de Ambiente
+
+Copie os modelos de ambiente de desenvolvimento e preencha com suas respectivas credenciais secretas obtidas no painel do Supabase:
+
+- **Para a Interface Web (`apps/website/.env`):**
+
+  ```bash
+  VITE_SUPABASE_URL=https://sua-url-projeto.supabase.co
+  VITE_SUPABASE_ANON_KEY=sua-chave-anonima-publica
+  ```
+
+- **Para o Script de Deploy OTA (`scripts/upload-ota-bundle.mjs`):**
+  ```bash
+  SUPABASE_URL=https://sua-url-projeto.supabase.co
+  SUPABASE_SERVICE_ROLE_KEY=sua-chave-service-role-superprivilegiada
+  ```
+
+### 3. Rodar em Ambiente de Desenvolvimento
+
+Execute todas as aplicações em paralelo com apenas um comando a partir da raiz:
 
 ```bash
-pnpm install
-```
-
-Isso instala todas as dependências da raiz e de todos os pacotes/workspaces.
-
-### 3. Configure as Variáveis de Ambiente
-
-```bash
-# Na pasta do website
-cd apps/website
-cp .env.example .env
-# Edite .env e adicione suas credenciais do Supabase
-```
-
-_Veja a tabela detalhada de credenciais na seção abaixo._
-
-### 4. Inicie o Desenvolvimento
-
-```bash
-# Na raiz do projeto
 pnpm dev
 ```
 
-Isso iniciará todas as aplicações em modo desenvolvimento em paralelo.
-
-Para iniciar apenas o website:
+Para inicializar apenas uma aplicação específica (ex: interface web):
 
 ```bash
 pnpm --filter @smart-gen/website dev
 ```
 
-## Variáveis de Ambiente
+---
 
-O projeto requer as seguintes variáveis de ambiente configuradas para que todas as partes rodem corretamente:
+## 🛡️ Variáveis de Ambiente de Produção & CI/CD
 
-### Para o Website (`apps/website/.env`)
+Para o correto funcionamento do ecossistema de deploys contínuos e canais de atualização, as seguintes variáveis precisam estar cadastradas nos segredos do repositório (**GitHub Secrets**):
 
-| Variável                 | Descrição                 | Exemplo                          |
-| ------------------------ | ------------------------- | -------------------------------- |
-| `VITE_SUPABASE_URL`      | URL do projeto Supabase   | `https://xyzcompany.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Chave anônima do Supabase | `public-anon-key`                |
-
-### Para o Script de Upload OTA (`scripts/upload-ota-bundle.mjs`)
-
-| Variável                    | Descrição                                         | Exemplo                          |
-| --------------------------- | ------------------------------------------------- | -------------------------------- |
-| `SUPABASE_URL`              | URL do projeto Supabase                           | `https://xyzcompany.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço com permissão total (não expor!) | `eyJhbGciOiJIUzI1NiIsInR5cCI...` |
-
-> ⚠️ Lembre-se sempre de copiar `.env.example` para `.env` e preencher seus valores secretos. Nunca commite arquivos `.env`.
->
-> 🔒 O `SUPABASE_SERVICE_ROLE_KEY` jamais deve ser exposto no frontend. Ele é usado apenas pelo script de upload e pelo GitHub Actions (como secret).
-
-## Aplicações
-
-### 🌐 Website (`@smart-gen/website`)
-
-A aplicação front-end principal, que também é empacotada e distribuída como conteúdo web dentro do app mobile via Capacitor.
-
-- **Stack**: Vue 3, Vite, Tailwind CSS v4, Pinia, Vue Router, Vitest
-- **Para rodar localmente**: `pnpm --filter @smart-gen/website dev`
-- **Para formatar / lint**: `pnpm --filter @smart-gen/website format` e `pnpm --filter @smart-gen/website lint`
-- **Para testes e build**: `pnpm --filter @smart-gen/website test:unit` e `pnpm --filter @smart-gen/website build`
-
-[Ver documentação completa do Website](apps/website/README.md)
-
-### 📱 Mobile (`@smart-gen/mobile`)
-
-App nativo para Android e iOS construído com Capacitor. Embala o website em uma WebView nativa e utiliza `@capgo/capacitor-updater` para receber atualizações OTA sem passar pela App Store.
-
-- **Stack**: Capacitor, Android (Gradle/Java), iOS (Xcode/Swift)
-- **Para gerar APK debug**: Requer Android Studio ou `./gradlew assembleDebug`
-- **Atualização OTA**: Automática após qualquer deploy na `main`
-
-[Ver documentação completa do Mobile](apps/mobile/README.md)
-
-### ⚙️ Firmware (`firmware/`)
-
-Código C++ que roda diretamente no microcontrolador ESP32. Responsável por coletar leituras dos sensores e enviá-las para o Supabase via HTTP/REST.
-
-- **Stack**: C++ (Arduino framework), ESP-IDF
-- **Sensores suportados**: Temperatura (DS18B20), Nível de Água
-- **Conectividade**: Wi-Fi com suporte a múltiplas redes (WiFiMulti)
-- **Identificação**: Baseada em MAC Address via RPC no Supabase
-
-## Pacotes Internos
-
-### ⚙️ TSConfig (`@smart-gen/tsconfig`)
-
-Presets TypeScript centralizados para todo o monorepo. Disponibiliza quatro configurações base:
-
-- `base.json` — Configurações compartilhadas (strict, bundler, ESNext).
-- `vue.json` — Extends `base` + DOM libs + suporte a Vue SFC (`.vue`).
-- `node.json` — Extends `base` + Node.js types.
-- `vitest.json` — Extends `vue` + jsdom para ambiente de testes.
-
-[Ver documentação completa do TSConfig](packages/tsconfig/README.md)
-
-### 🧩 Shared (`@smart-gen/shared`)
-
-Local exclusivo para funções utilitárias genéricas, tipagens (types/interfaces), schemas de validação (Zod) e constantes que não dependem de nada do front-end. O objetivo é evitar duplicação de lógicas.
-
-[Ver documentação completa do Shared](packages/shared/README.md)
-
-### 🗄️ Supabase (`@smart-gen/supabase`)
-
-Camada isolada de backend. Toda e qualquer interação com o banco de dados via Supabase (autenticação, acesso a tabelas, policies) deve ocorrer **dentro deste pacote**.
-
-A lógica interna é organizada por **Resources** (ex: `generators`, `users`), onde cada recurso possui:
-
-- **Queries**: Funções exclusivas para leitura de dados (select).
-- **Mutations**: Funções para escrita (insert, update, delete).
-- **Services**: Local para regras de negócio complexas que orquestram múltiplas operações.
-
-[Ver documentação completa do Supabase](packages/supabase/README.md)
-
-## Scripts Disponíveis
-
-### Na Raiz do Projeto
-
-| Comando          | Descrição                                                              |
-| ---------------- | ---------------------------------------------------------------------- |
-| `pnpm dev`       | Inicia todas as aplicações em modo desenvolvimento                     |
-| `pnpm build`     | Constrói todas as aplicações para produção                             |
-| `pnpm test`      | Roda todos os testes unitários                                         |
-| `pnpm check-all` | Executa lint e type-check em todos os pacotes                          |
-| `pnpm run sync`  | **Início:** Puxa as novidades do Git (com autostash) e instala pacotes |
-| `pnpm run ready` | **Fim:** Sincroniza e verifica erros antes de enviar seu código        |
-
-### Script de OTA
-
-```bash
-# Faz build do website, empacota e envia para o Supabase Storage
-SUPABASE_URL="..." SUPABASE_SERVICE_ROLE_KEY="..." node scripts/upload-ota-bundle.mjs
-```
-
-> Em produção, esse script é executado automaticamente pelo GitHub Actions após o CI passar na `main`.
-
-## Workflow da Equipe
-
-Para manter o projeto organizado e evitar conflitos, siga estes dois momentos:
-
-1. **Ao começar a trabalhar:** Rode `pnpm run sync`. Isso garante que você tem a versão mais recente do código dos seus colegas sem perder suas mudanças locais.
-2. **Antes de abrir um Pull Request (PR):** Rode `pnpm run ready`. Ele vai garantir que o seu código "se dá bem" com o código novo que chegou e que não existem erros de estilo ou de tipagem.
-
-### Git Hooks (Husky)
-
-O projeto utiliza **Husky** para garantir qualidade automática em cada operação Git:
-
-- **`pre-commit`**: Executa lint nos arquivos staged antes de cada commit.
-- **`pre-push`**: Verifica se a branch local está sincronizada com o remoto antes de enviar.
+| Escopo              | Variável                    | Descrição                                           | Exemplo                   |
+| :------------------ | :-------------------------- | :-------------------------------------------------- | :------------------------ |
+| **Pipeline Global** | `SUPABASE_URL`              | URL de conexão do cluster Supabase.                 | `https://xyz.supabase.co` |
+| **Pipeline Global** | `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço com bypass de RLS para upload OTA. | `eyJhbGciOiJIUzI1...`     |
+| **CD Website**      | `VERCEL_ORG_ID`             | Identificador da organização Vercel.                | `team_abc123`             |
+| **CD Website**      | `VERCEL_PROJECT_ID`         | Identificador do projeto na Vercel.                 | `prj_xyz456`              |
+| **CD Website**      | `VERCEL_TOKEN`              | Token de autorização para deploys via CLI.          | `aBcD123...`              |
 
 ---
 
-## Testes
+## 📐 Regras de Arquitetura e Padrões de Código
 
-### Executando Testes
+Para garantir a coesão do ecossistema, os desenvolvedores e agentes de IA devem seguir rigorosamente as regras abaixo:
+
+1.  **Sem Supabase no Front-End Direto:** O diretório `apps/website` **nunca** deve importar `@supabase/supabase-js`. Ele deve consumir apenas as assinaturas, mutations e queries expostas pelo pacote local `@smart-gen/supabase`.
+2.  **Validações Puras no Shared:** Funções auxiliares sem efeitos colaterais e validações estruturais Zod devem residir exclusivamente em `packages/shared` para livre importação.
+3.  **Realtime sem Conflitos:** Assinaturas de WebSocket de telemetria usam sufixos numéricos dinâmicos para evitar colisões no servidor com canais antigos que estão em processo de desconexão (`LEAVING`).
+4.  **Husky & Linters:** O Husky executa checagem estática rigorosa antes de cada commit. Use `pnpm run ready` antes de submeter uma nova Pull Request (PR) para garantir que testes unitários e tipos passem localmente.
+
+---
+
+## 🧪 Estrutura de Testes Automatizados
+
+O ecossistema do **Smart Gen** preza pela estabilidade rigorosa e qualidade extrema de entrega. A arquitetura modular do monorepo é blindada por **mais de 150 testes automatizados** (exatamente **151 testes unitários e de integração** no total) rodando a cada commit via Git Hooks e GitHub Actions.
+
+Essa suíte de testes garante que nenhuma alteração introduza regressões em nenhuma das camadas:
+
+*   **`apps/website`:** Validação de stores reativas (Pinia), Guards de Rotas, fluxos de autenticação e o comportamento do serviço de atualização OTA.
+*   **`packages/supabase`:** Cobertura de serviços de autenticação, queries de recuperação, mutations e o gerenciamento de subscrições em tempo real.
+*   **`packages/shared`:** Validação estrita de contratos de dados e schemas Zod (Cadastro, Login e Recuperação de Senha).
+*   **`packages/reports`:** Testes de geração e estruturação do motor de relatórios.
+
+O projeto utiliza o **Vitest** rodando sobre o ambiente `jsdom` para emulação veloz de DOM e runners de alto paralelismo.
+
+Para executar os testes de maneira focada ou global:
 
 ```bash
-# Todos os testes de todos os pacotes
+# Executa todos os testes de todos os pacotes do monorepo
 pnpm test
 
-# Testes apenas do website
-pnpm --filter @smart-gen/website test:unit
-
-# Testes apenas do supabase
+# Testes apenas do pacote de dados (Supabase)
 pnpm --filter @smart-gen/supabase test:unit
 
-# Testes apenas do shared
-pnpm --filter @smart-gen/shared test:unit
+# Testes apenas da aplicação web (Website)
+pnpm --filter @smart-gen/website test:unit
 ```
 
-### Estrutura de Testes
+---
 
-Cada pacote contém seus testes em:
+## 🔄 Fluxo de Atualização OTA (Over-the-Air)
 
-- `__tests__/` para testes unitários
-- Configuração específica em `vitest.config.ts` ou similar
+O aplicativo mobile utiliza o `@capgo/capacitor-updater` configurado em modo **Manual/Deferred** (`autoUpdate: false`). O fluxo ocorre de forma silenciosa para não interromper a navegação do usuário:
 
-### Cobertura
-
-| Pacote     | Áreas cobertas                                                    |
-| ---------- | ----------------------------------------------------------------- |
-| `website`  | Auth store, Router guards, `OtaUpdateService`                     |
-| `supabase` | Auth service, `getLastReadingByGeneratorId`, recuperação de senha |
-| `shared`   | Schemas Zod de autenticação e recuperação de senha                |
-
-## Deploy / CI-CD
-
-O projeto conta com pipelines automatizados via **GitHub Actions**.
-
-### Pipelines disponíveis
-
-| Workflow             | Trigger                       | Descrição                                                   |
-| -------------------- | ----------------------------- | ----------------------------------------------------------- |
-| `ci.yml`             | Push/PR em `main` e `develop` | Lint, type-check, testes e build de verificação             |
-| `deploy-website.yml` | CI passou em `main`           | Build e deploy automático do website para o **Vercel**      |
-| `deploy-ota.yml`     | CI passou em `main`           | Build, empacotamento e upload do bundle OTA para o Supabase |
-| `build-mobile.yml`   | CI passou em `main`           | Geração do APK Android de debug e envio para o **Telegram** |
-
-### Fluxo completo de uma PR mergeada em `main`
-
-```bash
-Merge → CI (lint + type-check + tests + build)
-           ├── ✅ deploy-website → Vercel (website)
-           ├── ✅ deploy-ota     → Supabase Storage (bundle mobile)
-           └── ✅ build-mobile   → APK + Telegram notification
-```
-
-_Nota: Se os testes ou a formatação falharem no CI, nenhum deploy é realizado, preservando a estabilidade em produção._
-
-## Regras Rápidas da Equipe
-
-1. **Pense globalmente**: Se um código for útil em outros lugares, ponha em `packages/shared`.
-2. **Dados Isolados**: A aplicação Vue (`apps/website`) nunca deve chamar a API diretamente; use apenas o cliente exportado por `packages/supabase`.
-3. **Mantenha o código limpo**: Sempre execute o _Linter_ (`lint`) e o _Prettier_ (`format`) antes dos seus commits. O Husky garante isso automaticamente.
-4. **Nunca exponha secrets**: O `SUPABASE_SERVICE_ROLE_KEY` só pertence ao GitHub Actions Secrets e ao ambiente de CI.
-5. **OTA é produção**: Qualquer push na `main` com alterações no `apps/website` dispara um deploy OTA para dispositivos reais.
+1.  Um commit é mesclado na branch `main`.
+2.  O GitHub Actions compila o front-end web de produção.
+3.  O script `upload-ota-bundle.mjs` compacta o build, gera o arquivo de metadados `version.json` usando o hash do commit (`GITHUB_SHA`), e envia os arquivos ao Supabase Storage.
+4.  Ao iniciar, o aplicativo nativo detecta a atualização, baixa o pacote em segundo plano e realiza a substituição dinâmica de arquivos de forma transparente.
 
 ---
 
