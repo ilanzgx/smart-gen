@@ -2,10 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Leitura } from "./types";
 
 const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
+const RETRY_DELAY_MS = 1500;
 
 /**
  * Inscreve-se em mudanças em tempo real na tabela 'registro' para um gerador específico.
+ *
+ * Utiliza um sufixo único no nome do canal para evitar colisões com canais
+ * que ainda estão sendo removidos pelo WebSocket do Supabase.
  *
  * @param {SupabaseClient} supabase - Instância do Supabase.
  * @param {string} generatorId - ID do gerador para filtrar as leituras.
@@ -21,9 +24,11 @@ export const subscribeToGeneratorReadings = (
   onSubscribed?: () => void,
   onInitialSubscribe?: (success: boolean) => void,
 ): { unsubscribe: () => Promise<void> } => {
-  console.log(
-    `[Realtime] Tentando conectar ao canal: registro-gerador-${generatorId}`,
-  );
+  // Sufixo único para evitar colisão com canais que ainda estão sendo removidos
+  const channelSuffix = Date.now();
+  const channelName = `registro-gerador-${generatorId}-${channelSuffix}`;
+
+  console.log(`[Realtime] Tentando conectar ao canal: ${channelName}`);
 
   let retries = 0;
   let channel: ReturnType<SupabaseClient["channel"]> | null = null;
@@ -34,7 +39,11 @@ export const subscribeToGeneratorReadings = (
   const setupChannel = () => {
     if (isUnsubscribed) return;
 
-    channel = supabase.channel(`registro-gerador-${generatorId}`).on(
+    // Cada retry usa um nome distinto para não conflitar com o canal anterior em estado LEAVING
+    const retryChannelName =
+      retries > 0 ? `${channelName}-r${retries}` : channelName;
+
+    channel = supabase.channel(retryChannelName).on(
       "postgres_changes",
       {
         event: "INSERT",
@@ -84,13 +93,19 @@ export const subscribeToGeneratorReadings = (
         );
 
         retryTimeout = setTimeout(() => {
-          if (channel && !isUnsubscribed) {
-            supabase
-              .removeChannel(channel)
-              .then(() => {
-                setupChannel();
-              })
-              .catch(() => {});
+          if (!isUnsubscribed) {
+            // Remove o canal com erro silenciosamente e cria um novo com nome distinto
+            if (channel) {
+              supabase
+                .removeChannel(channel)
+                .catch(() => {})
+                .finally(() => {
+                  channel = null;
+                  setupChannel();
+                });
+            } else {
+              setupChannel();
+            }
           }
         }, RETRY_DELAY_MS);
       }
@@ -118,7 +133,7 @@ export const subscribeToGeneratorReadings = (
         console.log(
           `[Realtime] Cancelando inscrição do canal: ${channel.topic}`,
         );
-        await supabase.removeChannel(channel);
+        supabase.removeChannel(channel).catch(() => {});
         channel = null;
       }
     },

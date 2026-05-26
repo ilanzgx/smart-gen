@@ -46,7 +46,7 @@ describe("readings.service testes unitários", () => {
 
     // Assert
     expect(mockSupabase.channel).toHaveBeenCalledWith(
-      "registro-gerador-test-id",
+      expect.stringMatching(/^registro-gerador-test-id-\d+$/),
     );
   });
 
@@ -126,13 +126,13 @@ describe("readings.service testes unitários", () => {
 
     // Act
     channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1500);
 
     channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1500);
 
     channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1500);
 
     // Assert
     expect(mockSupabase.channel).toHaveBeenCalledTimes(4);
@@ -150,12 +150,12 @@ describe("readings.service testes unitários", () => {
 
     // Act
     channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1500);
 
     channelSubscribeCallback("SUBSCRIBED");
 
     channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1500);
 
     // Assert - 1 inicial + 1 retry (reset após SUBSCRIBED) + 1 nova retry
     expect(mockSupabase.channel).toHaveBeenCalledTimes(3);
@@ -181,7 +181,7 @@ describe("readings.service testes unitários", () => {
     await unsubscribe();
 
     // Avançar timer - timeout foi limpo, não deve haver retry
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1500);
 
     // Assert - apenas chamada inicial, sem retries
     expect(mockSupabase.channel).toHaveBeenCalledTimes(1);
@@ -251,7 +251,7 @@ describe("readings.service testes unitários", () => {
     // Act
     for (let i = 0; i <= 3; i++) {
       channelSubscribeCallback("CHANNEL_ERROR", new Error("Test error"));
-      await vi.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1500);
     }
 
     // Assert

@@ -39,47 +39,38 @@ const isUpdatingData = ref(false)
 let updateTimer: ReturnType<typeof setTimeout> | null = null
 
 let unsubscribeRealtime: (() => Promise<void>) | null = null
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-const setupRealtime = async () => {
-  // Cancela o timer de debounce anterior se existir
-  if (debounceTimer) {
-    clearTimeout(debounceTimer)
-    debounceTimer = null
+const setupRealtime = () => {
+  if (unsubscribeRealtime) {
+    unsubscribeRealtime()
+    unsubscribeRealtime = null
   }
 
-  debounceTimer = setTimeout(async () => {
-    // Cancela a inscrição anterior
-    if (unsubscribeRealtime) {
-      await unsubscribeRealtime()
-      unsubscribeRealtime = null
-    }
+  if (!selectedGeneratorId.value) return
 
-    if (!selectedGeneratorId.value) return
-
-    // Cria nova inscrição
-    const { unsubscribe } = subscribeToGeneratorReadings(
-      supabase,
-      selectedGeneratorId.value,
-      (payload) => {
-        console.log('[Dashboard] Nova leitura recebida via Realtime:', payload.new)
-        updateDashboardFromReading(payload.new)
-      },
-      // Refaz fetch quando reconecta (dados podem estar desatualizados)
-      () => {
-        console.log('[Dashboard] Canal reconectado, atualizando dados...')
-        fetchDashboardData()
-      },
-      // Callback de conexão inicial
-      (success) => {
-        if (!success) {
-          console.warn('[Dashboard] Falha ao conectar no canal realtime.')
-        }
-        isSwitchingChannel.value = false
-      },
-    )
-    unsubscribeRealtime = unsubscribe
-  }, 500)
+  // Cria nova inscrição imediatamente — cada canal usa um nome único,
+  // então não há risco de colisão com o canal anterior em estado LEAVING
+  const { unsubscribe } = subscribeToGeneratorReadings(
+    supabase,
+    selectedGeneratorId.value,
+    (payload) => {
+      console.log('[Dashboard] Nova leitura recebida via Realtime:', payload.new)
+      updateDashboardFromReading(payload.new)
+    },
+    // Refaz fetch quando reconecta (dados podem estar desatualizados)
+    () => {
+      console.log('[Dashboard] Canal reconectado, atualizando dados...')
+      fetchDashboardData()
+    },
+    // Callback de conexão inicial
+    (success) => {
+      if (!success) {
+        console.warn('[Dashboard] Falha ao conectar no canal realtime.')
+      }
+      isSwitchingChannel.value = false
+    },
+  )
+  unsubscribeRealtime = unsubscribe
 }
 
 const updateDashboardFromReading = (reading: {
@@ -173,16 +164,13 @@ onMounted(async () => {
   await generatorsStore.fetchGenerators()
 })
 
-onUnmounted(async () => {
-  if (debounceTimer) {
-    clearTimeout(debounceTimer)
-  }
+onUnmounted(() => {
   if (updateTimer) {
     clearTimeout(updateTimer)
   }
 
   if (unsubscribeRealtime) {
-    await unsubscribeRealtime()
+    unsubscribeRealtime()
   }
 })
 
