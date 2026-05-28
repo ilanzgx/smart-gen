@@ -17,6 +17,7 @@
     "vitest": "^4.1.2"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.103.0"
+    "@supabase/supabase-js": "^2.103.0",
+    "@smart-gen/shared": "workspace:*"
   }
 }
