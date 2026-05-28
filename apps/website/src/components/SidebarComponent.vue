@@ -5,11 +5,13 @@ import { House, Zap, Plus, Bell, Settings, FileDown } from 'lucide-vue-next'
 import CreateGeneratorDialog from '@/components/dialogs/CreateGeneratorDialog.vue'
 import SettingsDialog from '@/components/dialogs/SettingsDialog.vue'
 import GenerateReportDialog from '@/components/dialogs/GenerateReportDialog.vue'
+import AlertsDialog from '@/components/dialogs/AlertsDialog.vue'
 
 // Dialogs
 const createGeneratorDialogOpen = ref(false)
 const settingsDialogOpen = ref(false)
 const generateReportDialogOpen = ref(false)
+const alertsDialogOpen = ref(false)
 </script>
 
 <template>
@@ -69,14 +71,14 @@ const generateReportDialogOpen = ref(false)
         <GenerateReportDialog v-model:open="generateReportDialogOpen" />
 
         <!-- Alertas -->
-        <RouterLink
-          to="/alertas"
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-0"
-          active-class="bg-sky-100 !text-gray-900"
+        <button
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-0 cursor-pointer text-left"
+          @click="alertsDialogOpen = true"
         >
           <Bell class="w-5 h-5 shrink-0 text-gray-600" />
           <span class="text-gray-900 font-semibold">Alertas</span>
-        </RouterLink>
+        </button>
+        <AlertsDialog v-model:open="alertsDialogOpen" />
       </nav>
 
       <!-- Configurações -->
