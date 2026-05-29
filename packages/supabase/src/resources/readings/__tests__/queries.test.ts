@@ -6,15 +6,19 @@ import {
   getReadingById,
   getReadingsByGeneratorId,
   getLastReadingByGeneratorId,
+  getCriticalReadings
 } from "../queries";
 
 describe("readings.queries testes unitários", () => {
   const mockSingle = vi.fn();
   const mockMaybeSingle = vi.fn();
-  const mockOrder = vi.fn().mockReturnThis();
+  const mockOrder = vi.fn();
   const mockLimit = vi.fn();
   const mockEq = vi.fn();
   const mockSelect = vi.fn();
+  const mockOr = vi.fn();
+  const mockGte = vi.fn();
+  const mockLte = vi.fn();
   const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 
   const mockSupabase = {
@@ -24,27 +28,25 @@ describe("readings.queries testes unitários", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockSelect.mockReturnValue({
-      eq: mockEq,
-      then: (onFulfilled: any) =>
-        Promise.resolve({ data: [], error: null }).then(onFulfilled),
-    });
+    const queryBuilder: any = {};
+    queryBuilder.eq = mockEq;
+    queryBuilder.or = mockOr;
+    queryBuilder.order = mockOrder;
+    queryBuilder.gte = mockGte;
+    queryBuilder.lte = mockLte;
+    queryBuilder.limit = mockLimit;
+    queryBuilder.single = mockSingle;
+    queryBuilder.maybeSingle = mockMaybeSingle;
+    queryBuilder.then = (onFulfilled: any) =>
+      Promise.resolve({ data: [], error: null }).then(onFulfilled);
 
-    mockEq.mockReturnValue({
-      single: mockSingle,
-      maybeSingle: mockMaybeSingle,
-      order: mockOrder,
-      then: (onFulfilled: any) =>
-        Promise.resolve({ data: [], error: null }).then(onFulfilled),
-    });
-
-    mockOrder.mockReturnValue({
-      limit: mockLimit,
-    });
-
-    mockLimit.mockReturnValue({
-      maybeSingle: mockMaybeSingle,
-    });
+    mockSelect.mockReturnValue(queryBuilder);
+    mockEq.mockReturnValue(queryBuilder);
+    mockOr.mockReturnValue(queryBuilder);
+    mockOrder.mockReturnValue(queryBuilder);
+    mockGte.mockReturnValue(queryBuilder);
+    mockLte.mockReturnValue(queryBuilder);
+    mockLimit.mockReturnValue(queryBuilder);
   });
 
   it("deve buscar todos os registros de leitura", async () => {
@@ -140,5 +142,69 @@ describe("readings.queries testes unitários", () => {
     await expect(
       getLastReadingByGeneratorId(mockSupabase, "gen-123"),
     ).rejects.toEqual(mockError);
+  });
+
+  describe("getCriticalReadings", () => {
+    it("deve buscar leituras críticas com valores padrão (sem opções)", async () => {
+      // Arrange
+      const mockData = [{ id: "reg-1", temperatura: 85, nivel_agua: 50 }];
+      mockLimit.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+
+      // Act
+      const sut = await getCriticalReadings(mockSupabase);
+
+      // Assert
+      expect(mockSupabase.from).toHaveBeenCalledWith("registro");
+      expect(mockSelect).toHaveBeenCalledWith("*");
+      expect(mockOr).toHaveBeenCalledWith("temperatura.gte.85,nivel_agua.lte.10");
+      expect(mockOrder).toHaveBeenCalledWith("timestamp", { ascending: false });
+      expect(mockLimit).toHaveBeenCalledWith(50); // padrão: 50
+      expect(sut).toEqual(mockData);
+    });
+
+    it("deve buscar leituras críticas filtrando por generatorId", async () => {
+      // Arrange
+      const mockData = [{ id: "reg-1", gerador_id: "gen-123", temperatura: 85 }];
+      mockLimit.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+
+      // Act
+      const sut = await getCriticalReadings(mockSupabase, { generatorId: "gen-123" });
+
+      // Assert
+      expect(mockSupabase.from).toHaveBeenCalledWith("registro");
+      expect(mockEq).toHaveBeenCalledWith("gerador_id", "gen-123");
+      expect(sut).toEqual(mockData);
+    });
+
+    it("deve buscar leituras críticas filtrando por intervalo de datas e limite customizado", async () => {
+      // Arrange
+      const mockData = [{ id: "reg-1", temperatura: 85 }];
+      const startDate = new Date("2026-05-01T00:00:00Z");
+      const endDate = new Date("2026-05-02T00:00:00Z");
+      mockLimit.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+
+      // Act
+      const sut = await getCriticalReadings(mockSupabase, {
+        startDate,
+        endDate,
+        limit: 10,
+      });
+
+      // Assert
+      expect(mockSupabase.from).toHaveBeenCalledWith("registro");
+      expect(mockGte).toHaveBeenCalledWith("timestamp", startDate.toISOString());
+      expect(mockLte).toHaveBeenCalledWith("timestamp", endDate.toISOString());
+      expect(mockLimit).toHaveBeenCalledWith(10);
+      expect(sut).toEqual(mockData);
+    });
+
+    it("deve lançar erro se a busca por leituras críticas falhar", async () => {
+      // Arrange
+      const mockError = { message: "Erro na consulta" };
+      mockLimit.mockReturnValue(Promise.resolve({ data: null, error: mockError }));
+
+      // Act & Assert
+      await expect(getCriticalReadings(mockSupabase)).rejects.toEqual(mockError);
+    });
   });
 });
