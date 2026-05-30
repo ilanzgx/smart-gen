@@ -5,12 +5,16 @@ import { onMounted, ref, computed, watch } from 'vue'
 import { getReadingsByGeneratorId, type Leitura } from '@smart-gen/supabase'
 import { supabase } from '@/lib/supabase'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useThemeStore } from '@/stores/theme.store'
 
 const props = defineProps<{
   generatorId: string
   lastReading?: Leitura | null
 }>()
 const loading = ref(true)
+const themeStore = useThemeStore()
+
+const isDark = computed(() => themeStore.theme === 'dark')
 
 type TimeFilter = 1 | 7 | 30 | 365
 
@@ -54,11 +58,14 @@ const series = computed<ApexAxisChartSeries>(() => [
 const chartOptions = computed<ApexOptions>(() => {
   const { xFormat, tooltipFormat } = formatConfig[timeFilter.value]
 
+  const isDarkMode = isDark.value
+
   return {
     chart: {
       type: 'area',
       toolbar: { show: false },
       zoom: { enabled: false },
+      foreColor: isDarkMode ? '#a1a1aa' : '#64748b',
     },
     stroke: {
       curve: 'smooth',
@@ -79,23 +86,26 @@ const chartOptions = computed<ApexOptions>(() => {
       labels: {
         datetimeUTC: false,
         format: xFormat,
+        style: { colors: isDarkMode ? '#a1a1aa' : '#64748b' },
       },
     },
     yaxis: {
       min: 0,
       max: 100,
-      title: { text: '%' },
+      title: { text: '%', style: { color: isDarkMode ? '#a1a1aa' : '#64748b' } },
       labels: {
         formatter: (v) => `${v.toFixed(0)}%`,
+        style: { colors: isDarkMode ? '#a1a1aa' : '#64748b' },
       },
     },
     tooltip: {
+      theme: isDarkMode ? 'dark' : 'light',
       x: { format: tooltipFormat },
       y: { formatter: (v) => `${v.toFixed(1)}%` },
     },
     colors: ['#3b82f6'],
     grid: {
-      borderColor: '#f1f5f9',
+      borderColor: isDarkMode ? '#27272a' : '#f1f5f9',
     },
   }
 })

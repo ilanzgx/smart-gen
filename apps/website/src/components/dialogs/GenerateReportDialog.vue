@@ -252,7 +252,7 @@ const handleGenerateReport = async () => {
         <div class="space-y-2">
           <Label for="period-select">Período</Label>
           <Select v-model="selectedPeriod" :disabled="isGenerating">
-            <SelectTrigger id="period-select" class="w-full bg-gray-100">
+            <SelectTrigger id="period-select" class="w-full bg-gray-100 dark:bg-slate-800">
               <SelectValue placeholder="Selecione o período" />
             </SelectTrigger>
             <SelectContent>
@@ -271,11 +271,11 @@ const handleGenerateReport = async () => {
             :disabled="isGenerating"
           >
             <div class="flex items-center gap-2">
-              <RadioGroupItem class="bg-gray-100" id="format-pdf" value="pdf" />
+              <RadioGroupItem class="bg-gray-100 dark:bg-slate-800" id="format-pdf" value="pdf" />
               <Label for="format-pdf" class="font-normal cursor-pointer">PDF</Label>
             </div>
             <div class="flex items-center gap-2">
-              <RadioGroupItem class="bg-gray-100" id="format-xlsx" value="xlsx" />
+              <RadioGroupItem class="bg-gray-100 dark:bg-slate-800" id="format-xlsx" value="xlsx" />
               <Label for="format-xlsx" class="font-normal cursor-pointer">XLSX</Label>
             </div>
           </RadioGroup>

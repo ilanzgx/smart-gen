@@ -37,12 +37,12 @@ function descartarAlte() {
   <DashboardLayout>
     <main>
       <!-- Div da foto -->
-      <div class="border-1 p-5 m-1 mx-auto rounded-lg md:w-110 relative flex flex-col shadow-xl">
+      <div class="border-1 dark:border-slate-800 p-5 m-1 mx-auto rounded-lg md:w-110 relative flex flex-col shadow-xl dark:bg-slate-900">
         <!--grupo da imagem-->
         <div class="cursor-pointer group relative w-32 h-32 m-5 mx-auto">
-          <UserRound class="bg-gray-200 w-full h-full rounded-full p-2 shadow-xl"></UserRound>
+          <UserRound class="bg-gray-200 dark:bg-slate-700 w-full h-full rounded-full p-2 shadow-xl"></UserRound>
           <div
-            class="bg-gray-200 absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full ease-in"
+            class="bg-gray-200 dark:bg-slate-700 absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full ease-in"
           >
             <Pen class="w-32 h-full p-5"></Pen>
           </div>
@@ -50,19 +50,19 @@ function descartarAlte() {
 
         <div class="flex flex-col">
           <label>nome do usuario:</label>
-          <div class="flex bg-gray-200 hover:bg-gray-100 rounded-lg relative">
+          <div class="flex bg-gray-200 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg relative">
             <Input @change="mostrarBox" ref="elmInputName" class="w-full" v-model="name_temp" />
             <pen class="mx-2 absolute right-0 bottom-2"></pen>
           </div>
 
           <label>email do usuario:</label>
-          <div class="p-2 bg-gray-200 flex rounded-lg cursor-not-allowed">
+          <div class="p-2 bg-gray-200 dark:bg-slate-800 flex rounded-lg cursor-not-allowed">
             <span class="w-full">{{ email }}</span>
             <LockIcon></LockIcon>
           </div>
 
           <label>acesso:</label>
-          <div class="p-2 bg-gray-200 flex rounded-lg cursor-not-allowed">
+          <div class="p-2 bg-gray-200 dark:bg-slate-800 flex rounded-lg cursor-not-allowed">
             <span class="w-full">admin</span>
             <UserRoundKeyIcon></UserRoundKeyIcon>
           </div>

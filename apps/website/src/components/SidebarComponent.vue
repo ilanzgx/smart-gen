@@ -16,7 +16,7 @@ const alertsDialogOpen = ref(false)
 
 <template>
   <aside
-    class="w-64 border-r shrink-0 bg-white h-full shadow-2xl md:shadow-none z-50 flex flex-col"
+    class="w-64 border-r dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 h-full shadow-2xl md:shadow-none z-50 flex flex-col"
   >
     <div class="flex flex-col h-full p-4 overflow-y-auto w-full">
       <!-- Logo -->
@@ -31,65 +31,65 @@ const alertsDialogOpen = ref(false)
         <!-- Dashboard -->
         <RouterLink
           to="/dashboard"
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-0"
-          active-class="bg-sky-100 !text-gray-900"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 dark:text-slate-400 w-full mb-0"
+          active-class="bg-sky-100 dark:bg-sky-500/10 !text-gray-900 dark:!text-slate-100"
         >
-          <House class="w-5 h-5 shrink-0 text-gray-600" />
-          <span class="text-gray-900 font-semibold">Dashboard</span>
+          <House class="w-5 h-5 shrink-0 text-gray-600 dark:text-slate-400" />
+          <span class="text-gray-900 dark:text-slate-100 font-semibold">Dashboard</span>
         </RouterLink>
 
         <!-- Geradores -->
         <RouterLink
           to="/geradores"
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-6"
-          active-class="bg-sky-100 !text-gray-900"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 dark:text-slate-400 w-full mb-6"
+          active-class="bg-sky-100 dark:bg-sky-500/10 !text-gray-900 dark:!text-slate-100"
         >
-          <Zap class="w-5 h-5 shrink-0 text-gray-600" />
-          <span class="text-gray-900 font-semibold">Geradores</span>
+          <Zap class="w-5 h-5 shrink-0 text-gray-600 dark:text-slate-400" />
+          <span class="text-gray-900 dark:text-slate-100 font-semibold">Geradores</span>
         </RouterLink>
 
         <!-- Registrar Gerador -->
         <button
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full cursor-pointer"
-          active-class="bg-sky-100 !text-gray-900"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 dark:text-slate-400 w-full cursor-pointer"
+          active-class="bg-sky-100 dark:bg-sky-500/10 !text-gray-900 dark:!text-slate-100"
           @click="createGeneratorDialogOpen = true"
         >
-          <Plus class="w-5 h-5 shrink-0 text-gray-600" />
-          <span class="text-gray-900 font-semibold">Registrar Gerador</span>
+          <Plus class="w-5 h-5 shrink-0 text-gray-600 dark:text-slate-400" />
+          <span class="text-gray-900 dark:text-slate-100 font-semibold">Registrar Gerador</span>
         </button>
         <CreateGeneratorDialog v-model:open="createGeneratorDialogOpen" />
 
         <!-- Gerar Relatório -->
         <button
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-6 cursor-pointer"
-          active-class="bg-sky-100 !text-gray-900"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 dark:text-slate-400 w-full mb-6 cursor-pointer"
+          active-class="bg-sky-100 dark:bg-sky-500/10 !text-gray-900 dark:!text-slate-100"
           @click="generateReportDialogOpen = true"
         >
-          <FileDown class="w-5 h-5 shrink-0 text-gray-600" />
-          <span class="text-gray-900 font-semibold">Gerar Relatório</span>
+          <FileDown class="w-5 h-5 shrink-0 text-gray-600 dark:text-slate-400" />
+          <span class="text-gray-900 dark:text-slate-100 font-semibold">Gerar Relatório</span>
         </button>
         <GenerateReportDialog v-model:open="generateReportDialogOpen" />
 
         <!-- Alertas -->
         <button
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full mb-0 cursor-pointer text-left"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 dark:text-slate-400 w-full mb-0 cursor-pointer text-left"
           @click="alertsDialogOpen = true"
         >
-          <Bell class="w-5 h-5 shrink-0 text-gray-600" />
-          <span class="text-gray-900 font-semibold">Alertas</span>
+          <Bell class="w-5 h-5 shrink-0 text-gray-600 dark:text-slate-400" />
+          <span class="text-gray-900 dark:text-slate-100 font-semibold">Alertas</span>
         </button>
         <AlertsDialog v-model:open="alertsDialogOpen" />
       </nav>
 
       <!-- Configurações -->
-      <div class="border-t pt-3">
+      <div class="border-t dark:border-slate-800 pt-3">
         <button
-          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 w-full cursor-pointer"
-          active-class="bg-gray-100 !text-gray-900"
+          class="flex items-center gap-3 px-2 py-2 rounded-md text-gray-400 dark:text-slate-400 w-full cursor-pointer"
+          active-class="bg-gray-100 dark:bg-slate-800 !text-gray-900 dark:!text-slate-100"
           @click="settingsDialogOpen = true"
         >
-          <Settings class="w-5 h-5 shrink-0 text-gray-600" />
-          <span class="text-gray-900 font-medium">Configurações</span>
+          <Settings class="w-5 h-5 shrink-0 text-gray-600 dark:text-slate-400" />
+          <span class="text-gray-900 dark:text-slate-100 font-medium">Configurações</span>
         </button>
         <SettingsDialog v-model:open="settingsDialogOpen" />
       </div>

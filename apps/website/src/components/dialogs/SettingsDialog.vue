@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui'
 import { Switch } from '@/components/ui/switch'
 import { Moon, Sun } from 'lucide-vue-next'
+import { useThemeStore } from '@/stores/theme.store'
 
 const props = defineProps<{
   open?: boolean
@@ -22,7 +23,12 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
 }>()
 
-const isDarkMode = ref(false)
+const themeStore = useThemeStore()
+const isDarkMode = computed(() => themeStore.theme === 'dark')
+
+const onThemeToggle = (checked: boolean) => {
+  themeStore.setTheme(checked ? 'dark' : 'light')
+}
 </script>
 
 <template>
@@ -45,26 +51,26 @@ const isDarkMode = ref(false)
           </h3>
 
           <div
-            class="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800"
+            class="flex items-center justify-between p-4.5 rounded-xl bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/40 shadow-2xs"
           >
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
               <div
-                class="p-2 bg-white dark:bg-slate-800 rounded-md shadow-sm border border-slate-100 dark:border-slate-700"
+                class="p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow-2xs border border-slate-100/80 dark:border-slate-700/60 flex items-center justify-center shrink-0"
               >
                 <Moon v-if="isDarkMode" class="w-5 h-5 text-indigo-400" />
                 <Sun v-else class="w-5 h-5 text-amber-500" />
               </div>
               <div class="space-y-0.5">
-                <Label for="theme-toggle" class="text-base font-medium cursor-pointer"
+                <Label for="theme-toggle" class="text-base font-semibold cursor-pointer"
                   >Modo Escuro</Label
                 >
-                <p class="text-sm text-slate-500 dark:text-slate-400">
+                <p class="text-xs text-slate-500 dark:text-slate-400">
                   Ajusta o tema visual da tela.
                 </p>
               </div>
             </div>
 
-            <Switch id="theme-toggle" v-model="isDarkMode" />
+            <Switch id="theme-toggle" :model-value="isDarkMode" @update:model-value="onThemeToggle" />
           </div>
         </div>
       </div>

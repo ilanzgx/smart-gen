@@ -7,7 +7,7 @@ const isSidebarOpen = ref(false)
 </script>
 
 <template>
-  <div class="h-screen flex w-full bg-slate-50">
+  <div class="h-screen flex w-full bg-slate-50 dark:bg-slate-950">
     <!-- Sidebar no mobile é fixo, no desktop é relativo -->
     <SidebarComponent
       class="fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0"

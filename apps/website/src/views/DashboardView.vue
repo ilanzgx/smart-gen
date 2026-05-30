@@ -202,7 +202,7 @@ const formattedLastSync = computed(() => {
         >
           <span>Gerenciando unidade</span>
           <Select v-model="selectedGeneratorId" :disabled="isSwitchingChannel">
-            <SelectTrigger class="w-full sm:w-auto sm:min-w-70 bg-gray-100">
+            <SelectTrigger class="w-full sm:w-auto sm:min-w-70 bg-gray-100 dark:bg-slate-800">
               <SelectValue placeholder="Selecione uma unidade" />
             </SelectTrigger>
             <SelectContent>

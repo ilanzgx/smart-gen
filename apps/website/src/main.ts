@@ -3,6 +3,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { useAuthStore } from './stores/auth.store'
 import { useOtaStore } from './stores/ota.store'
+import { useThemeStore } from './stores/theme.store'
 import App from './App.vue'
 import router from './router'
 import { otaUpdateService } from './services/ota-update.service'
@@ -10,6 +11,7 @@ import { otaUpdateService } from './services/ota-update.service'
 const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
+useThemeStore()
 
 // Inicializa o plugin OTA (atualização over-the-air) e verifica se há atualizações.
 // Só funciona em dispositivos mobile.

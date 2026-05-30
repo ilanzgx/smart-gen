@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth.store'
+import { useThemeStore } from '@/stores/theme.store'
 import Separator from './ui/separator/Separator.vue'
 import Button from './ui/button/Button.vue'
-import { Menu } from 'lucide-vue-next'
+import { Menu, Moon, Sun, User } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
 // Criação de um evento para abrir a sidebar no mobile
@@ -12,6 +13,7 @@ const emit = defineEmits<{
 }>()
 
 const { signOut } = useAuthStore()
+const themeStore = useThemeStore()
 const router = useRouter()
 
 async function logout() {
@@ -28,7 +30,7 @@ async function logout() {
         <!-- Ícone Hambúrguer só aparece no Mobile, para invocar a Sidebar -->
         <button
           @click="emit('toggle-sidebar')"
-          class="md:hidden p-1.5 -ml-1.5 text-gray-500 hover:bg-gray-100 rounded-md transition-colors"
+          class="md:hidden p-1.5 -ml-1.5 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
           aria-label="Menu"
         >
           <Menu class="w-6 h-6" />
@@ -37,12 +39,15 @@ async function logout() {
       </div>
 
       <div class="flex items-center gap-4">
-        <RouterLink to="/perfil">
-          <img
-            class="w-9 h-9 md:w-10 md:h-10 rounded-full shrink-0 object-cover border-2 border-gray-200"
-            src="/images/user.svg"
-            alt="User"
-          />
+        <RouterLink
+          to="/perfil"
+          class="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
+        >
+          <div
+            class="w-9 h-9 md:w-10 md:h-10 rounded-full shrink-0 flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800/60 transition-all shadow-2xs cursor-pointer"
+          >
+            <User class="w-4.5 md:w-5 h-5" />
+          </div>
         </RouterLink>
         <Button @click="logout" variant="outline" size="sm" class="hidden md:inline-flex"
           >Sair</Button
@@ -54,6 +59,19 @@ async function logout() {
           class="md:hidden inline-flex h-9 px-3 text-xs"
           >Sair</Button
         >
+        <!-- Theme toggle button -->
+        <button
+          @click="themeStore.toggleTheme"
+          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label="Alternar tema"
+        >
+          <template v-if="themeStore.theme === 'dark'">
+            <Sun class="w-5 h-5" />
+          </template>
+          <template v-else>
+            <Moon class="w-5 h-5" />
+          </template>
+        </button>
       </div>
     </div>
     <Separator class="mb-0" />

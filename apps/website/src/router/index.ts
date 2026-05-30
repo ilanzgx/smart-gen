@@ -34,6 +34,7 @@ const router = createRouter({
       component: HomeView,
       meta: {
         public: true,
+        forceLight: true,
       },
     },
     {
@@ -43,6 +44,7 @@ const router = createRouter({
       alias: ['/signin', '/login'],
       meta: {
         public: true,
+        forceLight: true,
       },
     },
     {
@@ -52,6 +54,7 @@ const router = createRouter({
       alias: ['/cadastro', '/signup', '/register', '/registrar'],
       meta: {
         public: true,
+        forceLight: true,
       },
     },
     {
@@ -61,6 +64,7 @@ const router = createRouter({
       alias: ['/recover-password', '/forgot-password', '/esqueci-minha-senha'],
       meta: {
         public: true,
+        forceLight: true,
       },
     },
     {
@@ -70,6 +74,7 @@ const router = createRouter({
       alias: ['/update-password', '/reset-password', '/nova-senha', '/new-password'],
       meta: {
         public: true,
+        forceLight: true,
       },
     },
     {
@@ -118,6 +123,19 @@ const router = createRouter({
  * - Redireciona para o dashboard se o usuário estiver autenticado e tentar acessar a página de login ou registro
  */
 router.beforeEach((to) => {
+  // Forçar modo claro em rotas específicas (Home, Login, Cadastro, Recuperar Senha, etc.)
+  if (to.meta.forceLight) {
+    document.documentElement.classList.remove('dark')
+  } else {
+    // Restaurar o tema selecionado pelo usuário
+    const storedTheme = localStorage.getItem('theme') || 'light'
+    if (storedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }
+
   const authStore = useAuthStore()
 
   // Limpar erros de autenticação ao trocar de rota
